@@ -22,6 +22,7 @@
 
 */
 
+// ReSharper disable CppClangTidyCertErr33C
 #include "stdafx.h"
 #include <cstdio>
 #include <cstdlib>
@@ -74,10 +75,12 @@
 #include <limits>
 #endif
 
+#include "arrayHelpers.hpp"
 #include "str_util.h"
 #include "util.h"
 #include "filesys.h"
 #include "boinc_api.h"
+#include "LcHelpers.hpp"
 #include "mfile.h"
 #include "start_CUDA.h"
 #include "Version.h"
@@ -140,20 +143,22 @@ void update_shmem() {
 
 // NOTE: global parameters
 int l_max, m_max, n_iter, last_call,
-n_coef, num_fac, l_curves, n_ph_par,
-l_points[MAX_LC + 1], in_rel[MAX_LC + 1],
-deallocate, max_l_points; // n_iter,
+n_coef, num_fac, n_ph_par, //, l_curves
+//l_points[MAX_LC + 1],
+//in_rel[MAX_LC + 1],
+deallocate; // , max_l_points; // n_iter,
 
 double o_chi_square, chi_square, a_lambda, a_lamda_incr, a_lamda_start, phi_0, scale,
-d_area[MAX_N_FAC + 1], sclnw[MAX_LC + 1], /*Area[MAX_N_FAC+1],*/
-y_out[MAX_N_OBS + 1],
+d_area[MAX_N_FAC + 1], // sclnw[MAX_LC + 1], Area[MAX_N_FAC+1],
+// y_out[MAX_N_OBS + 1],
 f_c[MAX_N_FAC + 1][MAX_LM + 1], f_s[MAX_N_FAC + 1][MAX_LM + 1],
 t_c[MAX_N_FAC + 1][MAX_LM + 1], t_s[MAX_N_FAC + 1][MAX_LM + 1],
 d_sphere[MAX_N_FAC + 1][MAX_N_PAR + 1], d_g[MAX_N_FAC + 1][MAX_N_PAR + 1],
-normal[MAX_N_FAC + 1][3], bl_matrix[4][4],
+normal[MAX_N_FAC + 1][3],
+bl_matrix[4][4],
 pleg[MAX_N_FAC + 1][MAX_LM + 1][MAX_LM + 1],
-d_bl_matrix[3][4][4],
-weight[MAX_N_OBS + 1];
+d_bl_matrix[3][4][4];
+// weight[MAX_N_OBS + 1];
 
 auto cuda_device = -1;
 APP_INIT_DATA aid;
@@ -180,19 +185,19 @@ int main(int argc, char** argv)
 	double jdMin;
 	/*Maximum JD*/
 	double jdMax;
-	/*Time in JD*/
-	double* tim;
-	/*Brightness*/
-	double* brightness;
+	///*Time in JD*/
+	//double* tim;
+	///*Brightness*/
+	//double* brightness;
 	/*Ecliptic astronomical tempocentric coordinates of the Sun in AU*/
 	double e0[4];
 	/*Ecliptic astronomical centric coordinates of the Earth in AU*/
 	double e[4];
 
 	double jd0, jd00, conw, conwR, a0 = 1.05, b0 = 1.00, c0 = 0.95, a, b, cAxis,
-		cl, al0, al0Abs, ave, e0Len, elen, cosAlpha, dth, dph, rfit, escl,
-		ee[MAX_N_OBS + 1][3], // e[4], e0[4],
-		ee0[MAX_N_OBS + 1][3], * cg, * cgFirst, * sig, * al, // *tim, *brightness,
+		cl, al0, al0Abs, average, e0Len, elen, cosAlpha, dth, dph, rfit, escl,
+		//ee[MAX_N_OBS + 1][3], ee0[MAX_N_OBS + 1][3] // e[4], e0[4],
+        * cg, * cgFirst, * al, //  * sig, *tim, *brightness,
 		betaPole[N_POLES + 1], lambdaPole[N_POLES + 1], par[4], * weightLc;
 
 	char* stringTemp;
@@ -205,28 +210,20 @@ int main(int argc, char** argv)
 	//   aalpha = matrix_double(MAX_N_PAR,MAX_N_PAR);
 
 	ifp = matrix_int(MAX_N_FAC, 4);
-	tim = vector_double(MAX_N_OBS);
-	brightness = vector_double(MAX_N_OBS);
-	sig = vector_double(MAX_N_OBS);
 	cg = vector_double(MAX_N_PAR);
 	cgFirst = vector_double(MAX_N_PAR);
 	t = vector_double(MAX_N_FAC);
 	f = vector_double(MAX_N_FAC);
 	at = vector_double(MAX_N_FAC);
 	af = vector_double(MAX_N_FAC);
+	//tim = vector_double(MAX_N_OBS);
+	//brightness = vector_double(MAX_N_OBS);
+	//sig = vector_double(MAX_N_OBS);
 
 	ia = vector_int(MAX_N_PAR);
 
-	lambdaPole[1] = 0;    betaPole[1] = 0;
-	lambdaPole[2] = 90;   betaPole[2] = 0;
-	lambdaPole[3] = 180;  betaPole[3] = 0;
-	lambdaPole[4] = 270;  betaPole[4] = 0;
-	lambdaPole[5] = 60;   betaPole[5] = 60;
-	lambdaPole[6] = 180;  betaPole[6] = 60;
-	lambdaPole[7] = 300;  betaPole[7] = 60;
-	lambdaPole[8] = 60;   betaPole[8] = -60;
-	lambdaPole[9] = 180;  betaPole[9] = -60;
-	lambdaPole[10] = 300; betaPole[10] = -60;
+	double lambda_pole[N_POLES + 1] = { 0.0, 0.0, 90.0, 180.0, 270.0, 60.0, 180.0, 300.0, 60.0, 180.0, 300.0 };
+	double beta_pole[N_POLES + 1] = { 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 60.0, 60.0, -60.0, -60.0, -60.0 };
 
 	ia_lambda_pole = ia_beta_pole = 1;
 
@@ -244,29 +241,25 @@ int main(int argc, char** argv)
 
 	boinc_get_init_data(aid);
 
-//#ifdef _WIN32
-//	// -------------------
-//	char buffer[MAX_PATH];
-//	GetModuleFileName(NULL, buffer, MAX_PATH);
-//	string::size_type pos = string(buffer).find_last_of("\\/");
-//	auto result = string(buffer).substr(0, pos);
-//	//--------------------------------------------
-//#else
-//	// open the input file (resolve logical name first)
-//	//
-//	boinc_resolve_filename(input_filename, inputPath, sizeof(inputPath));
-//	infile = boinc_fopen(inputPath, "r");
-//	if (!infile) {
-//		fprintf(stderr,
-//			"%s Couldn't find input file, resolved name %s.\n",
-//			boinc_msg_prefix(buf, sizeof(buf)), inputPath
-//		);
-//		exit(-1);
-//	}
-//#endif
+	auto gl = globals();
+	auto res = PrepareLcData(gl, input_filename);
+	if (res <= 0)
+	{
+		fprintf(stderr, "\nCouldn't find input file, resolved name %s.\n", input_filename);
+		fflush(stderr);
+	}
+
+	double** ee = matrix_double(gl.maxDataPoints, 3);
+	double** ee0 = matrix_double(gl.maxDataPoints, 3);
+	/*Time in JD*/
+	double* tim = vector_double(gl.maxDataPoints);
+	/*Brightness*/
+	double* brightness = vector_double(gl.maxDataPoints);
+	/*Mean Brightness as 'sigma'*/
+	double* sig = vector_double(gl.maxDataPoints);
+
 
 	// open the input file (resolve logical name first)
-	//
 	boinc_resolve_filename(input_filename, inputPath, sizeof(inputPath));
 	infile = boinc_fopen(inputPath, "r");
 	if (!infile) {
@@ -386,20 +379,20 @@ int main(int argc, char** argv)
 
 	// NOTE: light curves + geometry file
 	// NOTE: number of light curves and the first relative one
-	fscanf(infile, "%d", &l_curves);
+	fscanf(infile, "%d", &gl.Lcurves);
 
 	if (boinc_is_standalone())
 	{
-		printf("%d  Number of light curves\n", l_curves);
+		printf("%d  Number of light curves\n", gl.Lcurves);
 	}
 
-	if (l_curves > MAX_LC)
-	{
-		fprintf(stderr, "\nError: Number of lcs  is greater than MAX_LC = %d\n", MAX_LC); fflush(stderr); exit(2);
-	}
+	//if (l_curves > MAX_LC)
+	//{
+	//	fprintf(stderr, "\nError: Number of lcs  is greater than MAX_LC = %d\n", MAX_LC); fflush(stderr); exit(2);
+	//}
 
-	al = vector_double(l_curves);
-	weightLc = vector_double(l_curves);
+	al = vector_double(gl.Lcurves);
+	weightLc = vector_double(gl.Lcurves);
 
 	ndata = 0;              /* total number of data */
 	k2 = 0;                 /* index */
@@ -411,37 +404,38 @@ int main(int argc, char** argv)
 	jd0 = jd00;
 	a = a0; b = b0; cAxis = c0;
 
-	max_l_points = 0;
+	//max_l_points = 0;
 	/* loop over lightcurves */
-	for (i = 1; i <= l_curves; i++)
+	for (i = 1; i <= gl.Lcurves; i++)
 	{
-		ave = 0; /* average */
-		fscanf(infile, "%d %d", &l_points[i], &iTemp); /* points in this lightcurve */
+		average = 0; /* average */
+		fscanf(infile, "%d %d", &gl.Lpoints[i], &iTemp); /* points in this lightcurve */
 		if (boinc_is_standalone())
 		{
-			printf("%d points in light curve[%d]\n", l_points[i], i);
+			printf("%d points in light curve[%d]\n", gl.Lpoints[i], i);
 		}
+
 		fgets(stringTemp, MAX_LINE_LENGTH, infile);
-		in_rel[i] = 1 - iTemp;
-		if (in_rel[i] == 0)
+		gl.Inrel[i] = 1 - iTemp;
+		if (gl.Inrel[i] == 0)
 			onlyrel = 0;
 
-		if (l_points[i] > max_l_points) max_l_points = l_points[i];
+		//if (l_points[i] > max_l_points) max_l_points = l_points[i];
 
-		if (l_points[i] > POINTS_MAX)
-		{
-			fprintf(stderr, "\nError: Number of lc points is greater than POINTS_MAX = %d\n", POINTS_MAX); fflush(stderr); exit(2);
-		}
+		//if (l_points[i] > POINTS_MAX)
+		//{
+		//	fprintf(stderr, "\nError: Number of lc points is greater than POINTS_MAX = %d\n", POINTS_MAX); fflush(stderr); exit(2);
+		//}
 
 		// NOTE: loop over one light curve
-		for (j = 1; j <= l_points[i]; j++)
+		for (j = 1; j <= gl.Lpoints[i]; j++)
 		{
 			ndata++;
 
-			if (ndata > MAX_N_OBS)
-			{
-				fprintf(stderr, "\nError: Number of data is greater than MAX_N_OBS = %d\n", MAX_N_OBS); fflush(stderr); exit(2);
-			}
+			//if (ndata > MAX_N_OBS)
+			//{
+			//	fprintf(stderr, "\nError: Number of data is greater than MAX_N_OBS = %d\n", MAX_N_OBS); fflush(stderr); exit(2);
+			//}
 
 			fscanf(infile, "%lf %lf", &tim[ndata], &brightness[ndata]); // NOTE: JD, brightness
 			fscanf(infile, "%lf %lf %lf", &e0[1], &e0[2], &e0[3]);      // NOTE: ecliptic astronomical tempocentric coordinates of the Sun in AU
@@ -456,7 +450,7 @@ int main(int argc, char** argv)
 			e0Len = sqrt(e0[1] * e0[1] + e0[2] * e0[2] + e0[3] * e0[3]);
 			elen = sqrt(e[1] * e[1] + e[2] * e[2] + e[3] * e[3]);
 
-			ave += brightness[ndata];
+			average += brightness[ndata];
 
 			// NOTE: normalization of distance vectors
 			for (k = 1; k <= 3; k++)
@@ -475,7 +469,7 @@ int main(int argc, char** argv)
 					al0 = al[i];
 					ial0 = ndata;
 				}
-				if ((al[i] < al0Abs) && (in_rel[i] == 0))
+				if ((al[i] < al0Abs) && (gl.Inrel[i] == 0))
 				{
 					al0Abs = al[i];
 					ial0_abs = ndata;
@@ -483,22 +477,22 @@ int main(int argc, char** argv)
 			}
 		} /* j, one lightcurve */
 
-		ave /= l_points[i];
+		average /= gl.Lpoints[i];
 
 		/* Mean brightness of lcurve
 		   Use the mean brightness as 'sigma' to renormalize the
 		   mean of each lightcurve to unity */
 
-		for (j = 1; j <= l_points[i]; j++)
+		for (j = 1; j <= gl.Lpoints[i]; j++)
 		{
 			k2++;
-			sig[k2] = ave;
+			sig[k2] = average;
 		}
 
 	} /* i, all lightcurves */
 
 	/* initiation of weights */
-	for (i = 1; i <= l_curves; i++)
+	for (i = 1; i <= gl.Lcurves; i++)
 		weightLc[i] = -1;
 
 	/* reads weights */
@@ -530,18 +524,18 @@ int main(int argc, char** argv)
 	phi_0 = phi_0 * DEG2RAD;
 
 	k = 0;
-	for (i = 1; i <= l_curves; i++)
-		for (j = 1; j <= l_points[i]; j++)
+	for (i = 1; i <= gl.Lcurves; i++)
+		for (j = 1; j <= gl.Lpoints[i]; j++)
 		{
 			k++;
 			if (weightLc[i] == -1)
-				weight[k] = 1;
+				gl.Weight[k] = 1;
 			else
-				weight[k] = weightLc[i];
+				gl.Weight[k] = weightLc[i];
 		}
 
 	for (i = 1; i <= 3; i++)
-		weight[k + i] = 1;
+		gl.Weight[k + i] = 1;
 
 	/* use calibrated data if possible */
 	if (onlyrel == 0)
@@ -567,9 +561,9 @@ int main(int argc, char** argv)
 	/* Convexity regularization: make one last 'lightcurve' that
 	   consists of the three comps. of the residual nonconv. vect.
 	   that should all be zero */
-	l_curves = l_curves + 1;
-	l_points[l_curves] = 3;
-	in_rel[l_curves] = 0;
+	gl.Lcurves = gl.Lcurves + 1;
+	gl.Lpoints[gl.Lcurves] = 3;
+	gl.Inrel[gl.Lcurves] = 0;
 
 	// extract a --device option
 
@@ -609,7 +603,7 @@ int main(int argc, char** argv)
 		fprintf(stderr, "Version: %d.%d.%d.%d\n", major, minor, build, revision);
 	}
 
-	retval = CUDAPrepare(cuda_device, betaPole, lambdaPole, par, cl, a_lamda_start, a_lamda_incr, ee, ee0, tim, phi_0, checkpointExists, ndata);
+	retval = CUDAPrepare(cuda_device, betaPole, lambdaPole, par, cl, a_lamda_start, a_lamda_incr, ee, ee0, tim, phi_0, checkpointExists, ndata, gl);
 	if (!retval)
 	{
 		fflush(stderr);
@@ -724,7 +718,8 @@ int main(int argc, char** argv)
 			fprintf(stderr, "\nError: Number of parameters is greater than MAX_N_PAR = %d\n", MAX_N_PAR); fflush(stderr); exit(2);
 		}
 
-		CUDAPrecalc(cuda_device, startFrequency, endFrequency, frequencyStep, stopCondition, nIterMin, &conwR, ndata, ia, ia_par, &newConw, cgFirst, sig, num_fac, brightness);
+		CUDAPrecalc(cuda_device, startFrequency, endFrequency, frequencyStep, stopCondition, nIterMin, &conwR,
+			ndata, ia, ia_par, &newConw, cgFirst, sig, num_fac, brightness, gl);
 
 		ndata = ndata - 3;
 
@@ -831,7 +826,8 @@ int main(int argc, char** argv)
 		fprintf(stderr, "\nError: Number of parameters is greater than MAX_N_PAR = %d\n", MAX_N_PAR); fflush(stderr); exit(2);
 	}
 
-	CUDAStart(cuda_device, nStartFrom, startFrequency, endFrequency, frequencyStep, stopCondition, nIterMin, conwR, ndata, ia, ia_par, cgFirst, out, escl, sig, num_fac, brightness);
+	CUDAStart(cuda_device, nStartFrom, startFrequency, endFrequency, frequencyStep, stopCondition, nIterMin,
+		conwR, ndata, ia, ia_par, cgFirst, out, escl, sig, num_fac, brightness, gl);
 
 	out.close();
 

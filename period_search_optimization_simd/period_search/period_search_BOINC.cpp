@@ -379,6 +379,10 @@ int main(int argc, char** argv)
     /* lightcurves + geometry file */
     /* number of lightcurves and the first realtive one */
     err = fscanf_s(infile, "%d", &gl.Lcurves);
+    if (boinc_is_standalone())
+    {
+        printf("%d  Number of light curves\n", gl.Lcurves);
+    }
 
     double* al = vector_double(gl.Lcurves);
     double* weight_lc = vector_double(gl.Lcurves);
@@ -402,8 +406,12 @@ int main(int argc, char** argv)
     {
         double average = 0; /* average */
         err = fscanf_s(infile, "%d %d", &gl.Lpoints[i], &i_temp); /* points in this lightcurve */
-        fgets(str_temp, MAX_LINE_LENGTH, infile);
+        if (boinc_is_standalone())
+        {
+            printf("%d points in light curve[%d]\n", gl.Lpoints[i], i);
+        }
 
+        fgets(str_temp, MAX_LINE_LENGTH, infile);
         gl.Inrel[i] = 1 - i_temp;
         if (gl.Inrel[i] == 0)
             onlyrel = 0;

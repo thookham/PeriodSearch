@@ -5,12 +5,34 @@
 #include <vector>
 #include "arrayHelpers.hpp"
 
+void init3Darray(std::vector<double>& vector, int dim1, int dim2, int dim3)
+{
+    vector.resize(static_cast<unsigned long long>(dim1) * dim2 * dim3);
+    std::fill(vector.begin(), vector.end(), 0.0);
+}
+
+void init3Darray(std::unique_ptr<std::unique_ptr<std::unique_ptr<double[]>[]>[]>& de, int dim1, int dim2, int dim3)
+{
+    de = std::make_unique<std::unique_ptr<std::unique_ptr<double[]>[]>[]>(dim1);
+    for (int i = 0; i < dim1; ++i)
+    {
+        de[i] = std::make_unique<std::unique_ptr<double[]>[]>(dim2); // 4
+        for (int j = 0; j < dim2; ++j)
+        {
+            de[i][j] = std::make_unique<double[]>(dim3); // 4
+            std::fill_n(de[i][j].get(), dim3, 0.0); // Initialize each element to 0.0
+        }
+    }
+}
+
+
 void init2Darray(std::vector<std::unique_ptr<double[]>>& matrix, const int xSize, const int ySize)
 {
     matrix.resize(xSize);
     for (int i = 0; i < xSize; ++i)
     {
         matrix[i] = std::make_unique<double[]>(ySize);
+        std::fill_n(matrix[i].get(), ySize, 0.0); // Initialize each element to 0.0
     }
 }
 
@@ -20,7 +42,7 @@ void init2Darray(double **&matrix, int dytemp_siszeX, int dytemp_sizeY)
 	for (int i = 0; i < dytemp_siszeX; ++i)
 	{
 		matrix[i] = new double[dytemp_sizeY];
-		std::fill_n(matrix[i], dytemp_sizeY, 0.0);
+		std::fill_n(matrix[i], dytemp_sizeY, 0.0); // Initialize each element to 0.0
 	}
 }
 
