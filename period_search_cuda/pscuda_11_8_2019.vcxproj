@@ -100,7 +100,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>NotSet</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v142</PlatformToolset>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
   </PropertyGroup>
@@ -259,11 +259,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <LibraryPath>D:\boincsdk\boinc\win_build\Build\x64\Debug;$(CudaToolkitLibDir);$(LibraryPath)</LibraryPath>
-    <TargetName>Period_search_$(SDKIdentifier)_$(WindowsTargetPlatformVersion)_$(Platform)_cuda_$(CudaToolkitVersion)_$(Configuration)</TargetName>
+    <TargetName>Period_search_$(SDKIdentifier)_$(WindowsTargetPlatformVersion)_$(Platform)_$(PlatformToolset)_cuda_$(CudaToolkitVersion)_$(Configuration)</TargetName>
     <PublicIncludeDirectories>
     </PublicIncludeDirectories>
-    <OutDir>$(ProjectDir)$(Platform)_$(CudaToolkitVersion)\$(Configuration)\</OutDir>
-    <IntDir>$(ProjectDir)$(Platform)_$(CudaToolkitVersion)\$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)$(Platform)_$(CudaToolkitVersion)_$(PlatformToolset)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)$(Platform)_$(CudaToolkitVersion)_$(PlatformToolset)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_8_1|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -465,6 +465,7 @@
       <OmitFramePointers>false</OmitFramePointers>
       <MinimalRebuild>false</MinimalRebuild>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <SDLCheck>false</SDLCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -472,26 +473,30 @@
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
       <OptimizeReferences>false</OptimizeReferences>
       <!-- <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries> -->
-      <StackReserveSize>10000000</StackReserveSize>
-      <AdditionalDependencies>libboinc.lib;libboincapi.lib;cuda.lib;cudart.lib;nvml.lib;Version.lib;ShLwApi.lib;libgraphics2.lib;ps_commond.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CUDA_PATH_V11_8)\lib\x64;..\period_search_common\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <StackReserveSize>100000000</StackReserveSize>
+      <AdditionalDependencies>libboinc.lib;libboincapi.lib;cuda.lib;cudart.lib;nvml.lib;Version.lib;ShLwApi.lib;libgraphics2.lib;ps_commond_v142.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V11_8)\lib\x64;..\period_search_common\x64_$(PlatformToolset)\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <!-- libcmtd.lib;libcpmtd.lib; -->
     </Link>
     <CudaCompile>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
-      <TargetMachinePlatform>64</TargetMachinePlatform>
-      <CodeGeneration>compute_53,sm_53</CodeGeneration>
-      <GenerateLineInfo>true</GenerateLineInfo>
+      <CodeGeneration>compute_61,sm_61</CodeGeneration>
+      <GenerateLineInfo>false</GenerateLineInfo>
       <FastMath>false</FastMath>
       <PtxAsOptionV>true</PtxAsOptionV>
-      <Optimization>InheritFromHost</Optimization>
-      <GPUDebugInfo>false</GPUDebugInfo>
-      <MaxRegCount>32</MaxRegCount>
+      <Optimization>Od</Optimization>
+      <GPUDebugInfo>true</GPUDebugInfo>
+      <MaxRegCount>255</MaxRegCount>
       <CompileOut>$(IntDir)%(Filename)%(Extension).obj</CompileOut>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <Include>D:\boincsdk\boinc\lib;D:\boincsdk\boinc\api;$(CUDA_PATH_V11_8)\include;..\period_search_common;%(AdditionalIncludeDirectories)</Include>
     </CudaCompile>
     <CudaLink>
       <AdditionalLibraryDirectories>$(CUDA_PATH_V11_8)\lib\x64;$(CUDA_PATH_V11_8)\bin\x64\crt;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </CudaLink>
+    <BuildLog>
+      <Path>$(ProjectDir)$(Platform)_$(PlatformToolset)\$(Configuration)\$(MSBuildProjectName).log</Path>
+    </BuildLog>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_8_1|x64'">
     <ClCompile>
@@ -780,6 +785,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="period_search\areanorm.c" />
+    <ClCompile Include="period_search\ellfit.c" />
+    <ClCompile Include="period_search\lubksb.c" />
+    <ClCompile Include="period_search\ludcmp.c" />
     <ClCompile Include="period_search\VersionInfo.cpp" />
     <CudaCompile Include="period_search\blmatrix.cu">
       <FileType>CppCode</FileType>
@@ -795,7 +803,7 @@
       <FileType>CppCode</FileType>
     </CudaCompile>
     <ClCompile Include="period_search\dot_product.c" />
-    <ClCompile Include="period_search\ellfit.c" />
+    <ClCompile Include="period_search\ellfit.cpp" />
     <CudaCompile Include="period_search\curve2_CUDA.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
@@ -803,8 +811,8 @@
       <FileType>CppCode</FileType>
     </CudaCompile>
     <ClCompile Include="period_search\error.cpp" />
-    <ClCompile Include="period_search\lubksb.c" />
-    <ClCompile Include="period_search\ludcmp.c" />
+    <ClCompile Include="period_search\lubksb.cpp" />
+    <ClCompile Include="period_search\ludcmp.cpp" />
     <ClCompile Include="period_search\memory.c" />
     <CudaCompile Include="period_search\mrqcof.cu">
       <FileType>CppCode</FileType>

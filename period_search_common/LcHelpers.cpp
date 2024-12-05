@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <functional>
 #include <memory>
+#include <iostream>
 
 #if defined __GNU__
 #include <bits/stdc++.h>
@@ -15,6 +16,7 @@
 #include "constants.h"
 #include "arrayHelpers.hpp"
 
+/* number of lightcurves and the first realtive one */
 void processLine15(struct globals& gl, const char* line, int& err) {
     err = sscanf(line, "%d", &gl.Lcurves);
     if (err != 1) {
@@ -26,11 +28,13 @@ void processLine15(struct globals& gl, const char* line, int& err) {
 }
 
 void processLine16(struct globals& gl, const char* line, int& err, int& offset, int& i, int& i_temp, int lineNumber) {
-    err = sscanf(line, "%d %d", &gl.Lpoints[0], &i_temp);
+    err = sscanf(line, "%d %d", &gl.Lpoints[i], &i_temp);
     if (err != 2) {
         err = -1;
         return;
     }
+    //fprintf(stderr, "[LcHelpers] Lpoints[%d] %d\n", i, gl.Lpoints[i]);
+
     offset = lineNumber;
     i++;
 }
@@ -41,6 +45,7 @@ void processSubsequentLines(struct globals& gl, const char* line, int& err, int&
         err = -1;
         return;
     }
+    //fprintf(stderr, "[LcHelpers] Lpoints[%d] %d\n", i, gl.Lpoints[i]);
     offset = lineNumber;
     i++;
 }
@@ -66,7 +71,7 @@ int PrepareLcData(struct globals& gl, const char* filename)
 
     int lineNumber = 0;
     int offset = 0;
-    int i = 0;
+    int i = 1;
 
     std::unordered_map<int, std::function<void(const char*, int&)>> actions;
     actions[15] = [&](const char* line, int& err) { processLine15(gl, line, err); };
@@ -98,7 +103,7 @@ int PrepareLcData(struct globals& gl, const char* filename)
                 file.close();
                 return err;
             }
-            if (i == gl.Lcurves)
+            if (i > gl.Lcurves)
             {
                 break;
             }
@@ -107,16 +112,40 @@ int PrepareLcData(struct globals& gl, const char* filename)
 
     file.close();
 
-    gl.maxLcPoints = *(std::max_element(gl.Lpoints.get(), gl.Lpoints.get() + gl.Lcurves + 1)) + 1;
+    gl.Inrel = std::make_unique<int[]>(gl.Lcurves + 1 + gl.Lcurves);
+    std::fill_n(gl.Inrel.get(), gl.Lcurves + 2, 0);
+
+    gl.maxLcPoints = *(std::max_element(gl.Lpoints.get(), gl.Lpoints.get() + gl.Lcurves)) + 2;
+
     gl.ytemp = std::make_unique<double[]>(gl.maxLcPoints + 1);
+    std::fill_n(gl.ytemp.get(), gl.maxLcPoints + 1, 0.0);
 
     gl.dytemp_sizeY = MAX_N_PAR + 1 + 4;
     gl.dytemp_sizeX = gl.maxLcPoints + 1;
     init2Darray(gl.dytemp, gl.dytemp_sizeX, gl.dytemp_sizeY);
-    gl.maxDataPoints = std::accumulate(gl.Lpoints.get(), gl.Lpoints.get() + gl.Lcurves, 0);
+
+    gl.maxDataPoints = std::accumulate(gl.Lpoints.get(), gl.Lpoints.get() + gl.Lcurves + 2, 0);
+
     gl.Weight = std::make_unique<double[]>(gl.maxDataPoints + 1 + gl.Lcurves);
-    gl.Inrel = std::make_unique<int[]>(gl.Lcurves + 1 + gl.Lcurves);
+    std::fill_n(gl.Weight.get(), gl.maxDataPoints + 1, 0.0);
+
     gl.ave = 0.0;
 
     return 1;
+}
+
+/// Convexity regularization: make one last 'lightcurve' that
+/// consists of the three comps.of the residual non-convex vectors
+/// that should all be zero
+/// @param gl struct of globals
+void MakeConvexityRegularization(struct globals& gl)
+{
+    gl.Lcurves = gl.Lcurves + 1;
+    gl.Lpoints[gl.Lcurves] = 3;
+    gl.Inrel[gl.Lcurves] = 0;
+
+    gl.maxDataPoints = std::accumulate(gl.Lpoints.get(), gl.Lpoints.get() + gl.Lcurves + 1, 0);
+
+    //for (auto q = 0; q <= gl.Lcurves; q++)
+    //    fprintf(stderr, "Lpoints[%d] %d\n", q, gl.Lpoints[q]);
 }

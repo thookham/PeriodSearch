@@ -255,11 +255,11 @@ int main(int argc, char** argv)
         fflush(stderr);
     }
 
-    double** ee = matrix_double(gl.maxDataPoints + 4, 3);
-    double** ee0 = matrix_double(gl.maxDataPoints + 4, 3);
-    double* tim = vector_double(gl.maxDataPoints + 4);
-    double* brightness = vector_double(gl.maxDataPoints + 4);
-    double* sig = vector_double(gl.maxDataPoints + 4);
+    double** ee = matrix_double(gl.maxDataPoints + 5, 3);
+    double** ee0 = matrix_double(gl.maxDataPoints + 5, 3);
+    double* tim = vector_double(gl.maxDataPoints + 5);
+    double* brightness = vector_double(gl.maxDataPoints + 5);
+    double* sig = vector_double(gl.maxDataPoints + 5);
 
     // open the input file (resolve logical name first)
     boinc_resolve_filename(input_filename, input_path, sizeof(input_path));
@@ -378,7 +378,8 @@ int main(int argc, char** argv)
 
     /* lightcurves + geometry file */
     /* number of lightcurves and the first realtive one */
-    err = fscanf_s(infile, "%d", &gl.Lcurves);
+    int lcurvesl; // dummy member as we already got this in PrepareLcData() // TODO: Get rid of this using jump
+    err = fscanf_s(infile, "%d", &lcurvesl);
     if (boinc_is_standalone())
     {
         printf("%d  Number of light curves\n", gl.Lcurves);
@@ -401,11 +402,15 @@ int main(int argc, char** argv)
     double b = b0;
     double c_axis = c0;
 
+    //for (auto q = 0; q <= gl.Lcurves; q++)
+    //    fprintf(stderr, "Lpoints[%d] %d\n", q, gl.Lpoints[q]);
+
+    auto lpointsl = new int[gl.Lcurves + 2]; // dummy member as we already got this in PrepareLcData() // TODO: Get rid of this using jump
     /* Loop over lightcurves */
     for (i = 1; i <= gl.Lcurves; i++)
     {
         double average = 0; /* average */
-        err = fscanf_s(infile, "%d %d", &gl.Lpoints[i], &i_temp); /* points in this lightcurve */
+        err = fscanf_s(infile, "%d %d", &lpointsl[i], &i_temp); /* points in this lightcurve */
         if (boinc_is_standalone())
         {
             printf("%d points in light curve[%d]\n", gl.Lpoints[i], i);
@@ -559,9 +564,7 @@ int main(int argc, char** argv)
     /* Convexity regularization: make one last 'lightcurve' that
        consists of the three comps. of the residual nonconv. vect.
        that should all be zero */
-    gl.Lcurves = gl.Lcurves + 1;
-    gl.Lpoints[gl.Lcurves] = 3;
-    gl.Inrel[gl.Lcurves] = 0;
+    MakeConvexityRegularization(gl);
 
     // For Unit test reference only
     //printArray(Inrel, 10, "Inrel");
@@ -1230,8 +1233,8 @@ int main(int argc, char** argv)
 
     //delete[] gl.Inrel;
     //delete[] gl.Lpoints;
-    //delete[] gl.ytemp;
     //delete[] gl.Weight;
+    //delete[] gl.ytemp;
     //delete2Darray(gl.dytemp, gl.dytemp_sizeX);
 
     free(str_temp);

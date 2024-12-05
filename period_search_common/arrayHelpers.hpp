@@ -8,10 +8,22 @@ void init3Darray(std::unique_ptr<std::unique_ptr<std::unique_ptr<double[]>[]>[]>
 void init2Darray(std::vector<std::unique_ptr<double[]>>& matrix, int xSize, int ySize);
 void init2Darray(double**& matrix, int dytemp_siszeX, int dytemp_sizeY);
 void delete2Darray(double**& ary, int sizeY);
+
 void printArray(int array[], int iMax, char msg[]);
 void printArray(double array[], int iMax, char msg[]);
 void printArray(double** array, int iMax, int jMax, char msg[]);
 void printArray(double*** array, int iMax, int jMax, int kMax, char msg[]);
+
+double* vector_double(int length);
+int* vector_int(int length);
+double** matrix_double(int rows, int columns);
+double** aligned_matrix_double(int rows, int columns);
+int** matrix_int(int rows, int columns);
+double*** matrix_3_double(int n_1, int n_2, int n_3);
+void deallocate_vector(void* p_x);
+void deallocate_matrix_double(double** p_x, int rows);
+void aligned_deallocate_matrix_double(double** p_x, int rows);
+void deallocate_matrix_int(int** p_x, int rows);
 
 struct globals
 {

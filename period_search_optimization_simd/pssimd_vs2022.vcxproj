@@ -340,6 +340,9 @@
       <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -598,7 +601,6 @@
     <ClCompile Include="period_search\lubksb.cpp" />
     <ClCompile Include="period_search\ludcmp.cpp" />
     <ClCompile Include="period_search\matrix.cpp" />
-    <ClCompile Include="period_search\memory.cpp" />
     <ClCompile Include="period_search\mrqcof.cpp" />
     <ClCompile Include="period_search\mrqcof_asimd.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
