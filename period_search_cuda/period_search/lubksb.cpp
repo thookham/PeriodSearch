@@ -1,8 +1,12 @@
 /* Numerical Recipes */
 
+#include <memory>
+#include <vector>
+
 #include "stdafx.h"
 
-void lubksb(double **a, int n, int indx[], double b[])
+//void lubksb(double **a, int n, int indx[], double b[])
+void lubksb(std::vector<std::unique_ptr<double[]>>& a, int n, int* indx, std::unique_ptr<double[]>& b)
 {
    int i, ii=0, ip, j;
    double sum;

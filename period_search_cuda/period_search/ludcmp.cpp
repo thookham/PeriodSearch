@@ -7,13 +7,16 @@
 #include <math.h>
 constexpr auto tiny = 1.0e-20;
 
-void ludcmp(double** a, int n, int indx[], double d[])
+//void ludcmp(double** a, int n, int indx[], double d[])
+void ludcmp(std::vector<std::unique_ptr<double[]>>& a, int n, int* indx, std::unique_ptr<double[]>& d)
 {
 	int i, imax = -999, j, k;
 	double big, dum, sum, temp;
-	auto v = vector_double(n);
+	//auto v = vector_double(n);
+	auto v = new_vector_double(n);
 
-	*d = 1.0;
+	//*d = 1.0;
+	d[0] = 1.0;
 	for (i = 1; i <= n; i++)
 	{
 		big = 0.0;
@@ -73,7 +76,8 @@ void ludcmp(double** a, int n, int indx[], double d[])
 				a[j][k] = dum;
 			}
 
-			*d = -(*d);
+			//*d = -(*d);
+			d[0] = -(d[0]);
 			v[imax] = v[j];
 		}
 
@@ -93,5 +97,5 @@ void ludcmp(double** a, int n, int indx[], double d[])
 		}
 	}
 
-	deallocate_vector((void*)v);
+	new_deallocate_vector(v);
 }

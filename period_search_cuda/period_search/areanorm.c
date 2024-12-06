@@ -17,9 +17,9 @@ void areanorm(double t[], double f[], int ndir, int nfac, int **ifp, double at[]
    double c[4], vx[4], vy[4], vz[4],
           *x, *y, *z;
 
-   x = vector_double(ndir);
-   y = vector_double(ndir);
-   z = vector_double(ndir);
+   x = new_vector_double(ndir);
+   y = new_vector_double(ndir);
+   z = new_vector_double(ndir);
 
    for (i = 1; i <= ndir; i++)
    {
@@ -55,7 +55,10 @@ void areanorm(double t[], double f[], int ndir, int nfac, int **ifp, double at[]
       d_area[i]= 0.5 * clen;
    }
 
-   deallocate_vector((void *) x);
-   deallocate_vector((void *) y);
-   deallocate_vector((void *) z);
+   //deallocate_vector((void *) x);
+   //deallocate_vector((void *) y);
+   //deallocate_vector((void *) z);
+   new_deallocate_vector(x);
+   new_deallocate_vector(y);
+   new_deallocate_vector(z);
 }

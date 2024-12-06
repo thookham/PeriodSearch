@@ -112,10 +112,10 @@ int PrepareLcData(struct globals& gl, const char* filename)
 
     file.close();
 
-    gl.Inrel = std::make_unique<int[]>(gl.Lcurves + 1 + gl.Lcurves);
-    std::fill_n(gl.Inrel.get(), gl.Lcurves + 2, 0);
+    gl.Inrel = std::make_unique<int[]>(gl.Lcurves + 1);
+    std::fill_n(gl.Inrel.get(), gl.Lcurves + 1, 0);
 
-    gl.maxLcPoints = *(std::max_element(gl.Lpoints.get(), gl.Lpoints.get() + gl.Lcurves)) + 2;
+    gl.maxLcPoints = *(std::max_element(gl.Lpoints.get(), gl.Lpoints.get() + gl.Lcurves + 1)) + 1;
 
     gl.ytemp = std::make_unique<double[]>(gl.maxLcPoints + 1);
     std::fill_n(gl.ytemp.get(), gl.maxLcPoints + 1, 0.0);
@@ -126,7 +126,7 @@ int PrepareLcData(struct globals& gl, const char* filename)
 
     gl.maxDataPoints = std::accumulate(gl.Lpoints.get(), gl.Lpoints.get() + gl.Lcurves + 2, 0);
 
-    gl.Weight = std::make_unique<double[]>(gl.maxDataPoints + 1 + gl.Lcurves);
+    gl.Weight = std::make_unique<double[]>(gl.maxDataPoints + 1);
     std::fill_n(gl.Weight.get(), gl.maxDataPoints + 1, 0.0);
 
     gl.ave = 0.0;

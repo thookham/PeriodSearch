@@ -785,9 +785,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="period_search\areanorm.c" />
-    <ClCompile Include="period_search\ellfit.c" />
-    <ClCompile Include="period_search\lubksb.c" />
-    <ClCompile Include="period_search\ludcmp.c" />
+    <ClCompile Include="period_search\ellfit.cpp" />
+    <ClCompile Include="period_search\lubksb.cpp" />
+    <ClCompile Include="period_search\ludcmp.cpp" />
     <ClCompile Include="period_search\VersionInfo.cpp" />
     <CudaCompile Include="period_search\blmatrix.cu">
       <FileType>CppCode</FileType>
@@ -803,7 +803,6 @@
       <FileType>CppCode</FileType>
     </CudaCompile>
     <ClCompile Include="period_search\dot_product.c" />
-    <ClCompile Include="period_search\ellfit.cpp" />
     <CudaCompile Include="period_search\curve2_CUDA.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
@@ -811,8 +810,6 @@
       <FileType>CppCode</FileType>
     </CudaCompile>
     <ClCompile Include="period_search\error.cpp" />
-    <ClCompile Include="period_search\lubksb.cpp" />
-    <ClCompile Include="period_search\ludcmp.cpp" />
     <ClCompile Include="period_search\memory.c" />
     <CudaCompile Include="period_search\mrqcof.cu">
       <FileType>CppCode</FileType>

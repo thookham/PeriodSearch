@@ -42,16 +42,7 @@
     <ClCompile Include="period_search\dot_product.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="period_search\ellfit.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="period_search\error.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="period_search\lubksb.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="period_search\ludcmp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="period_search\memory.c">
@@ -72,13 +63,13 @@
     <ClCompile Include="period_search\period_search_BOINC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="period_search\ellfit.c">
+    <ClCompile Include="period_search\ellfit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="period_search\lubksb.c">
+    <ClCompile Include="period_search\lubksb.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="period_search\ludcmp.c">
+    <ClCompile Include="period_search\ludcmp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

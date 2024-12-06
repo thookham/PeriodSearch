@@ -168,6 +168,9 @@ const char project_name[] = "asteroidsathome";
 
 int main(int argc, char** argv)
 {
+	// Enable memory leak check at program exit
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
 	int retval, nlines, checkpointExists, nStartFrom;  //int c, nchars = 0 // double fsize, fd;
 	char inputPath[512], outputPath[512], chkptPath[512], buf[256];
 	MFILE out;
@@ -197,7 +200,7 @@ int main(int argc, char** argv)
 	double jd0, jd00, conw, conwR, a0 = 1.05, b0 = 1.00, c0 = 0.95, a, b, cAxis,
 		cl, al0, al0Abs, average, e0Len, elen, cosAlpha, dth, dph, rfit, escl,
 		//ee[MAX_N_OBS + 1][3], ee0[MAX_N_OBS + 1][3] // e[4], e0[4],
-        * cg, * cgFirst, * al, //  * sig, *tim, *brightness,
+        * al, //  * sig, *tim, *brightness, * cg, * cgFirst,
 		betaPole[N_POLES + 1], lambdaPole[N_POLES + 1], par[4], * weightLc;
 
 	char* stringTemp;
@@ -209,18 +212,28 @@ int main(int argc, char** argv)
 	//   covar = matrix_double(MAX_N_PAR,MAX_N_PAR);
 	//   aalpha = matrix_double(MAX_N_PAR,MAX_N_PAR);
 
-	ifp = matrix_int(MAX_N_FAC, 4);
-	cg = vector_double(MAX_N_PAR);
-	cgFirst = vector_double(MAX_N_PAR);
-	t = vector_double(MAX_N_FAC);
-	f = vector_double(MAX_N_FAC);
-	at = vector_double(MAX_N_FAC);
-	af = vector_double(MAX_N_FAC);
+	//ifp = matrix_int(MAX_N_FAC, 4);
+	//cg = vector_double(MAX_N_PAR);
+	//t = vector_double(MAX_N_FAC);
+	//f = vector_double(MAX_N_FAC);
+    //cgFirst = vector_double(MAX_N_PAR);
+	//at = vector_double(MAX_N_FAC);
+	//af = vector_double(MAX_N_FAC);
+
+	auto cg = create_vector_double(MAX_N_PAR);
+	auto cgFirst = create_vector_double(MAX_N_PAR + 1);
+	ifp = new_matrix_int(MAX_N_FAC, 4);
+	t = new_vector_double(MAX_N_FAC);
+	f = new_vector_double(MAX_N_FAC);
+	at = new_vector_double(MAX_N_FAC);
+	af = new_vector_double(MAX_N_FAC);
+
 	//tim = vector_double(MAX_N_OBS);
 	//brightness = vector_double(MAX_N_OBS);
 	//sig = vector_double(MAX_N_OBS);
 
-	ia = vector_int(MAX_N_PAR);
+	//ia = vector_int(MAX_N_PAR);
+	ia = new_vector_int(MAX_N_PAR);
 
 	double lambda_pole[N_POLES + 1] = { 0.0, 0.0, 90.0, 180.0, 270.0, 60.0, 180.0, 300.0, 60.0, 180.0, 300.0 };
 	double beta_pole[N_POLES + 1] = { 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 60.0, 60.0, -60.0, -60.0, -60.0 };
@@ -249,14 +262,26 @@ int main(int argc, char** argv)
 		fflush(stderr);
 	}
 
-	double** ee = matrix_double(gl.maxDataPoints, 3);
-	double** ee0 = matrix_double(gl.maxDataPoints, 3);
+	auto ef = ellfits();
+	//double** ee = matrix_double(gl.maxDataPoints, 3);
+	//double** ee0 = matrix_double(gl.maxDataPoints, 3);
+	//double** ee = new_matrix_double(gl.maxDataPoints, 3);
+	//double** ee0 = new_matrix_double(gl.maxDataPoints, 3);
+	auto ee = create_matrix_double(gl.maxDataPoints, 3);
+	auto ee0 = create_matrix_double(gl.maxDataPoints, 3);
+
 	/*Time in JD*/
-	double* tim = vector_double(gl.maxDataPoints);
+	//double* tim = vector_double(gl.maxDataPoints);
+	//double* tim = new_vector_double(gl.maxDataPoints);
+	auto tim = create_vector_double(gl.maxDataPoints + 1);
+
 	/*Brightness*/
-	double* brightness = vector_double(gl.maxDataPoints);
+	//double* brightness = vector_double(gl.maxDataPoints);
+	double* brightness = new_vector_double(gl.maxDataPoints);
+
 	/*Mean Brightness as 'sigma'*/
-	double* sig = vector_double(gl.maxDataPoints);
+	//double* sig = vector_double(gl.maxDataPoints);
+	double* sig = new_vector_double(gl.maxDataPoints);
 
 
 	// open the input file (resolve logical name first)
@@ -391,8 +416,10 @@ int main(int argc, char** argv)
 	//	fprintf(stderr, "\nError: Number of lcs  is greater than MAX_LC = %d\n", MAX_LC); fflush(stderr); exit(2);
 	//}
 
-	al = vector_double(gl.Lcurves);
-	weightLc = vector_double(gl.Lcurves);
+	//al = vector_double(gl.Lcurves);
+	//weightLc = vector_double(gl.Lcurves);
+	al = new_vector_double(gl.Lcurves);
+	weightLc = new_vector_double(gl.Lcurves);
 
 	ndata = 0;              /* total number of data */
 	k2 = 0;                 /* index */
@@ -691,7 +718,23 @@ int main(int argc, char** argv)
 		/* Precompute some function values at each normal direction*/
 		sphfunc(num_fac, at, af);
 
-		ellfit(cgFirst, a, b, cAxis, num_fac, n_coef, at, af);
+		//// *** TEST ***
+		//int ndir = 5;
+		//int ncoef = 3;
+		//double cg[3], at[6] = { 0, 1, 2, 3, 4, 5 }, af[6] = { 0, 1, 2, 3, 4, 5 };
+
+		//ellfit(cg, 1.0, 2.0, 3.0, ndir, ncoef, at, af);
+		//exit(0);
+		//// *** END TEST ***
+		///
+		
+		ef.er = create_vector_double(num_fac);
+		ef.d = create_vector_double(1);
+		ef.fitvec = create_vector_double(n_coef);
+		ef.fmat = create_matrix_double(num_fac + 1, n_coef + 1);
+		ef.fitmat = create_matrix_double(n_coef + 1, n_coef + 1);
+
+		ellfit(ef, cgFirst, a, b, cAxis, num_fac, n_coef, at, af);
 
 		startFrequency = 1 / startPeriod;
 		endFrequency = 1 / endPeriod;
@@ -799,7 +842,7 @@ int main(int argc, char** argv)
 	/* Precompute some function values at each normal direction*/
 	sphfunc(num_fac, at, af);
 
-	ellfit(cgFirst, a, b, cAxis, num_fac, n_coef, at, af);
+	ellfit(ef, cgFirst, a, b, cAxis, num_fac, n_coef, at, af);
 
 	startFrequency = 1 / startPeriod;
 	endFrequency = 1 / endPeriod;
@@ -837,21 +880,28 @@ int main(int argc, char** argv)
 	//  deallocate_matrix_double(ee0,MAX_N_OBS);
 	//  deallocate_matrix_double(covar,MAX_N_PAR);
 	//  deallocate_matrix_double(aalpha,MAX_N_PAR);
-	deallocate_matrix_int(ifp, MAX_N_FAC);
 
-	deallocate_vector(tim);
-	deallocate_vector(brightness);
-	deallocate_vector(sig);
-	deallocate_vector(cg);
-	deallocate_vector(cgFirst);
-	deallocate_vector(t);
-	deallocate_vector(f);
-	deallocate_vector(at);
-	deallocate_vector(af);
-	deallocate_vector(ia);
-	deallocate_vector(al);
-	deallocate_vector(weightLc);
 	free(stringTemp);
+	new_deallocate_vector(ia);
+
+	//new_deallocate_matrix_double(ee, 3);
+	//new_deallocate_matrix_double(ee0, 3);
+
+
+    new_deallocate_vector(weightLc);
+	new_deallocate_vector(al);
+
+	//new_deallocate_vector(tim);
+	new_deallocate_vector(brightness);
+	new_deallocate_vector(sig);
+
+    new_deallocate_matrix_int(ifp, MAX_N_FAC);
+	new_deallocate_vector(at);
+	new_deallocate_vector(af);
+ //   new_deallocate_vector(cg);
+	//new_deallocate_vector(cgFirst);
+	new_deallocate_vector(t);
+	new_deallocate_vector(f);
 
 	//auto clockRate = cudaDeviceGetAttribute()
 	boinc_fraction_done(1);

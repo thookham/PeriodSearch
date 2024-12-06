@@ -14,7 +14,7 @@ void trifac(int nrows, int **ifp)
 
    int **nod;
 
-   nod = matrix_int(2*nrows, 4*nrows);
+   nod = new_matrix_int(2*nrows, 4*nrows);
 
    nnod = 1; /* index from 1 to number of vertices */
    nod[0][0] = nnod;
@@ -79,5 +79,5 @@ void trifac(int nrows, int **ifp)
          }
       }
 
-   deallocate_matrix_int(nod, 2*nrows);
+   new_deallocate_matrix_int(nod, 2*nrows);
 }

@@ -117,6 +117,46 @@ bool nvml_enabled = false;
 //	if_freq_measured = true;
 //}
 
+// Custom deleter for CUDA device memory
+struct CudaDeleter
+{
+    void operator()(double* ptr) const
+    {
+        cudaFree(ptr);
+    }
+};
+
+// Allocation function using unique_ptr and custom deleter for CUDA device memory
+std::unique_ptr<double[], CudaDeleter> cuda_malloc_double(size_t size)
+{
+    double* dev_ptr;
+    cudaMalloc(reinterpret_cast<void**>(&dev_ptr), size * sizeof(double));
+
+    return std::unique_ptr<double[], CudaDeleter>(dev_ptr);
+}
+
+cudaError_t copy_vector_to_device(std::unique_ptr<double[], CudaDeleter>& device_ptr, const std::unique_ptr<double[]>& host_vector, int size) {
+    cudaError_t err = cudaMemcpy(device_ptr.get(), host_vector.get(), size * sizeof(double), cudaMemcpyHostToDevice);
+
+    return err;
+}
+
+
+// Function to copy data from host to device for a vector of unique_ptr arrays
+cudaError_t copy_matrix_to_device(const std::unique_ptr<double[], CudaDeleter>& device_ptr, const std::vector<std::unique_ptr<double[]>>& host_matrix, const int rows, const int cols)
+{
+    for (int i = 0; i < (rows + 1) * cols; ++i)
+    {
+        cudaError_t err = cudaMemcpy(device_ptr.get() + i * (rows + 1), host_matrix[i].get(), (rows + 1) * sizeof(double), cudaMemcpyHostToDevice);
+        if (err != cudaSuccess)
+        {
+            return err;
+        }
+    }
+
+    return cudaSuccess;
+}
+
 // NOTE: https://boinc.berkeley.edu/trac/wiki/CudaApps
 bool SetCUDABlockingSync(const int device)
 {
@@ -139,7 +179,8 @@ bool SetCUDABlockingSync(const int device)
 }
 
 int CUDAPrepare(int cudadev, double* beta_pole, double* lambda_pole, double* par, double cl, double Alamda_start, double Alamda_incr,
-    double** ee, double** ee0, double* tim, double Phi_0, int checkex, int ndata, struct globals& gl)
+    std::vector<std::unique_ptr<double[]>>& ee, std::vector<std::unique_ptr<double[]>>& ee0, std::unique_ptr<double[]>& tim, 
+    double Phi_0, int checkex, int ndata, struct globals& gl)
 {
     //init gpu
     auto initResult = SetCUDABlockingSync(cudadev);
@@ -236,40 +277,57 @@ int CUDAPrepare(int cudadev, double* beta_pole, double* lambda_pole, double* par
     res = cudaMemcpyToSymbol(CUDA_Alamda_incr, &Alamda_incr, sizeof(Alamda_incr));
     res = cudaMemcpyToSymbol(CUDA_Mmax, &m_max, sizeof(m_max));
     res = cudaMemcpyToSymbol(CUDA_Lmax, &l_max, sizeof(l_max));
-    //res = cudaMemcpyToSymbol(CUDA_tim, tim, sizeof(double) * (MAX_N_OBS + 1));
-    res = cudaMemcpyToSymbol(CUDA_tim, tim, sizeof(double) * (gl.maxDataPoints + 1));
     res = cudaMemcpyToSymbol(CUDA_Phi_0, &Phi_0, sizeof(Phi_0));
+    //res = cudaMemcpyToSymbol(CUDA_tim, tim, sizeof(double) * (MAX_N_OBS + 1));
+    //res = cudaMemcpyToSymbol(CUDA_tim, tim, sizeof(double) * (gl.maxDataPoints + 1));
 
-    res = cudaMalloc(&pWeight, (ndata + 3 + 1) * sizeof(double));
-    gl.Weight = std::make_unique<double[]>(ndata + 3 + 1);
-    res = cudaMemcpy(pWeight, gl.Weight.get(), (ndata + 3 + 1) * sizeof(double), cudaMemcpyHostToDevice);
+    // Copy tim data to device (allocate device memory for tim)
+    auto p_tim = cuda_malloc_double(ndata + 1);
+    res = cudaMemcpy(p_tim.get(), tim.get(), (ndata + 1) * sizeof(double), cudaMemcpyHostToDevice);
+    res = cudaMemcpyToSymbol(CUDA_tim, &p_tim, sizeof(p_tim));
+
+
+    //res = cudaMalloc(&pWeight, (ndata + 3 + 1) * sizeof(double));
+    //gl.Weight = std::make_unique<double[]>(ndata + 3 + 1);
+    //res = cudaMemcpy(pWeight, gl.Weight.get(), (ndata + 3 + 1) * sizeof(double), cudaMemcpyHostToDevice);
+    //res = cudaMemcpyToSymbol(CUDA_Weight, &pWeight, sizeof(pWeight));
+
+    auto device_pWeight = cuda_malloc_double(ndata + 3 + 1);
+    pWeight = device_pWeight.get();
+    res = copy_vector_to_device(device_pWeight, gl.Weight, ndata + 3 + 1);
     res = cudaMemcpyToSymbol(CUDA_Weight, &pWeight, sizeof(pWeight));
 
-    res = cudaMalloc(&pee, (ndata + 1) * 3 * sizeof(double));
-    res = cudaMemcpy(pee, ee, (ndata + 1) * 3 * sizeof(double), cudaMemcpyHostToDevice);
-    res = cudaMemcpyToSymbol(CUDA_ee, &pee, sizeof(void*));
+    //res = cudaMalloc(&pee, (ndata + 1) * 3 * sizeof(double));
+    //res = cudaMemcpy(pee, ee, (ndata + 1) * 3 * sizeof(double), cudaMemcpyHostToDevice);
+    //res = cudaMemcpyToSymbol(CUDA_ee, &pee, sizeof(void*));
+    
+    auto device_pee = cuda_malloc_double((ndata + 1) * 3);  // Allocate device memory
+    pee = device_pee.get();
+    res = copy_matrix_to_device(device_pee, ee, ndata, 3);         // Use the helper function to copy host data to device
+    res = cudaMemcpyToSymbol(CUDA_ee, &pee, sizeof(pee));   // Set the device symbol CUDA_ee with the device pointer `pee`
 
-    res = cudaMalloc(&pee0, (ndata + 1) * 3 * sizeof(double));
-    res = cudaMemcpy(pee0, ee0, (ndata + 1) * 3 * sizeof(double), cudaMemcpyHostToDevice);
-    res = cudaMemcpyToSymbol(CUDA_ee0, &pee0, sizeof(void*));
+    auto device_pee0 = cuda_malloc_double((ndata + 1) * 3);
+    pee0 = device_pee0.get();
+    res = copy_matrix_to_device(device_pee0, ee0, ndata, 3);
+    res = cudaMemcpyToSymbol(CUDA_ee0, &pee0, sizeof(pee0));
 
     if (res == cudaSuccess)
     {
         return 1;
     }
 
-    else return 0;
+    return 0;
 }
 
 void CUDAUnprepare(void)
 {
-    cudaFree(pee);
-    cudaFree(pee0);
-    cudaFree(pWeight);
+    //cudaFree(pee);
+    //cudaFree(pee0);
+    //cudaFree(pWeight);
 }
 
 int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_step, double stop_condition, int n_iter_min, double* conw_r,
-    int ndata, int* ia, int* ia_par, int* new_conw, double* cg_first, double* sig, int Numfac, double* brightness, struct globals& gl)
+    int ndata, int* ia, int* ia_par, int* new_conw, std::unique_ptr<double[]>& cg_first, double* sig, int Numfac, double* brightness, struct globals& gl)
 {
     //int* endPtr;
     int max_test_periods, iC, theEnd;
@@ -337,7 +395,12 @@ int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_ste
     m = Numfac + 1;
     cudaMemcpyToSymbol(CUDA_Numfac1, &m, sizeof(m));
     cudaMemcpyToSymbol(CUDA_ia, ia, sizeof(int) * (MAX_N_PAR + 1));
-    cudaMemcpyToSymbol(CUDA_cg_first, cg_first, sizeof(double) * (MAX_N_PAR + 1));
+
+    //cudaMemcpyToSymbol(CUDA_cg_first, cg_first, sizeof(double) * (MAX_N_PAR + 1));
+    auto p_cg_first = cuda_malloc_double(MAX_N_PAR + 1);
+    copy_vector_to_device(p_cg_first, cg_first, ndata + 1);
+    cudaMemcpyToSymbol(CUDA_cg_first, &p_cg_first, sizeof(p_cg_first));
+
     cudaMemcpyToSymbol(CUDA_n_iter_max, &n_iter_max, sizeof(n_iter_max));
     cudaMemcpyToSymbol(CUDA_n_iter_min, &n_iter_min, sizeof(n_iter_min));
     cudaMemcpyToSymbol(CUDA_ndata, &ndata, sizeof(ndata));
@@ -571,7 +634,7 @@ int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_ste
 
 
 int CUDAStart(int cudadev, int n_start_from, double freq_start, double freq_end, double freq_step, double stop_condition, int n_iter_min, double conw_r,
-    int ndata, int* ia, int* ia_par, double* cg_first, MFILE& mf, double escl, double* sig, int Numfac, double* brightness, struct globals& gl)
+    int ndata, int* ia, int* ia_par, std::unique_ptr<double[]>& cg_first, MFILE& mf, double escl, double* sig, int Numfac, double* brightness, struct globals& gl)
 {
     int retval, i, n, m, iC, n_max = (int)((freq_start - freq_end) / freq_step) + 1;
     int n_iter_max, theEnd, LinesWritten;
@@ -611,7 +674,11 @@ int CUDAStart(int cudadev, int n_start_from, double freq_start, double freq_end,
     m = Numfac + 1;
     cudaMemcpyToSymbol(CUDA_Numfac1, &m, sizeof(m));
     cudaMemcpyToSymbol(CUDA_ia, ia, sizeof(int) * (MAX_N_PAR + 1));
-    cudaMemcpyToSymbol(CUDA_cg_first, cg_first, sizeof(double) * (MAX_N_PAR + 1));
+    //cudaMemcpyToSymbol(CUDA_cg_first, cg_first, sizeof(double) * (MAX_N_PAR + 1));
+    auto p_cg_first = cuda_malloc_double(MAX_N_PAR + 1);
+    copy_vector_to_device(p_cg_first, cg_first, ndata + 1);
+    cudaMemcpyToSymbol(CUDA_cg_first, &p_cg_first, sizeof(p_cg_first));
+
     cudaMemcpyToSymbol(CUDA_n_iter_max, &n_iter_max, sizeof(n_iter_max));
     cudaMemcpyToSymbol(CUDA_n_iter_min, &n_iter_min, sizeof(n_iter_min));
     cudaMemcpyToSymbol(CUDA_ndata, &ndata, sizeof(ndata));
