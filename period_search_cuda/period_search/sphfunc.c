@@ -9,7 +9,8 @@
 #include "globals.h"
 #include "declarations.h"
 
-void sphfunc(int ndir, double at[], double af[])
+//void sphfunc(int ndir, double at[], double af[])
+void sphfunc(int ndir, std::vector<double>& at, std::vector<double>& af)
 {
    int i, j, m, l, n, k, ibot;
 

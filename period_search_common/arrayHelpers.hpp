@@ -51,8 +51,13 @@ struct globals
     int maxDataPoints;	// replaces MAX_N_OBS
     int dytemp_sizeX;
     int dytemp_sizeY;
-    std::unique_ptr<int[]> Lpoints;	    // int*
-    std::unique_ptr<int[]> Inrel;		// int*
+
+    //std::unique_ptr<int[]> Lpoints;	    // int*
+    //std::unique_ptr<int[]> Inrel;		// int*
+    //int* Lpoints;
+    //int* Inrel;
+    std::vector<int> Lpoints;
+    std::vector<int> Inrel;
 
     double ymod;
     double wt;
@@ -64,16 +69,40 @@ struct globals
     double xx1[4];
     double xx2[4];
     double dave[MAX_N_PAR + 1 + 4];
-    std::unique_ptr<double[]> ytemp;
-    std::unique_ptr<double[]> Weight;
-    std::vector<std::unique_ptr<double[]>> dytemp;
+
+    //std::unique_ptr<double[]> ytemp;
+    //std::unique_ptr<double[]> Weight;
+    //std::vector<std::unique_ptr<double[]>> dytemp;
+    //double* Weight;
+    //double* ytemp;      // Not used in CUDA
+    //double** dytemp;    // Not used in CUDA
+
+    std::vector<double> Weight;
+    std::vector<double> ytemp;                  // Not used in CUDA
+    std::vector<std::vector<double>> dytemp;    // Not used in CUDA
 };
 
 struct ellfits
 {
-    std::unique_ptr<double[]> fitvec;
-    std::unique_ptr<double[]> er;
-    std::unique_ptr<double[]> d;
-    std::vector<std::unique_ptr<double[]>> fmat;
-    std::vector<std::unique_ptr<double[]>> fitmat;
+    //std::unique_ptr<double[]> fitvec;
+    //std::unique_ptr<double[]> er;
+    //std::unique_ptr<double[]> d;
+    //std::vector<std::unique_ptr<double[]>> fmat;
+    //std::vector<std::unique_ptr<double[]>> fitmat;
+
+    //int* indx;
+    //double* fitvec;
+    //double* er;
+    //double* d;
+    //double* v;
+    //double** fmat;
+    //double** fitmat;
+
+    std::vector<int> indx;
+    std::vector<double> fitvec;
+    std::vector<double> er;
+    std::vector<double> d;
+    std::vector<double> v;
+    std::vector<std::vector<double>> fmat;
+    std::vector<std::vector<double>> fitmat;
 };

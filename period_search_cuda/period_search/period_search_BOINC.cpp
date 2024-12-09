@@ -143,10 +143,11 @@ void update_shmem() {
 
 // NOTE: global parameters
 int l_max, m_max, n_iter, last_call,
-n_coef, num_fac, n_ph_par, //, l_curves
-//l_points[MAX_LC + 1],
-//in_rel[MAX_LC + 1],
-deallocate; // , max_l_points; // n_iter,
+n_coef, num_fac, n_ph_par,
+deallocate;
+// l_points[MAX_LC + 1],
+// in_rel[MAX_LC + 1],
+// max_l_points; // n_iter, , l_curves
 
 double o_chi_square, chi_square, a_lambda, a_lamda_incr, a_lamda_start, phi_0, scale,
 d_area[MAX_N_FAC + 1], // sclnw[MAX_LC + 1], Area[MAX_N_FAC+1],
@@ -177,13 +178,15 @@ int main(int argc, char** argv)
 	FILE* state, * infile;
 
 	int i, j, l, m, k, n, nrows, onlyrel, ndata, k2, ndir, iTemp, nIterMin,
-		* ia, ial0, ial0_abs, ia_beta_pole, ia_lambda_pole, ia_prd, ia_par[4], ia_cl,
-		lcNumber, ** ifp, newConw;
+		ial0, ial0_abs, ia_beta_pole, ia_lambda_pole, ia_prd, ia_par[4], ia_cl,
+		lcNumber,  newConw;
+	// ** ifp, * ia, 
 
 	double startPeriod, periodStepCoef, endPeriod,
 		startFrequency, frequencyStep, endFrequency, //jdMin, jdMax,
-		stopCondition,
-		* t, * f, * at, * af;
+		stopCondition;
+	    // *t, * f, * at, * af;
+
 	/*Minimum JD*/
 	double jdMin;
 	/*Maximum JD*/
@@ -200,8 +203,8 @@ int main(int argc, char** argv)
 	double jd0, jd00, conw, conwR, a0 = 1.05, b0 = 1.00, c0 = 0.95, a, b, cAxis,
 		cl, al0, al0Abs, average, e0Len, elen, cosAlpha, dth, dph, rfit, escl,
 		//ee[MAX_N_OBS + 1][3], ee0[MAX_N_OBS + 1][3] // e[4], e0[4],
-        * al, //  * sig, *tim, *brightness, * cg, * cgFirst,
-		betaPole[N_POLES + 1], lambdaPole[N_POLES + 1], par[4], * weightLc;
+		// * al, * sig, *tim, *brightness, * cg, * cgFirst,
+		betaPole[N_POLES + 1], lambdaPole[N_POLES + 1], par[4]; // , * weightLc;
 
 	char* stringTemp;
 
@@ -219,21 +222,30 @@ int main(int argc, char** argv)
     //cgFirst = vector_double(MAX_N_PAR);
 	//at = vector_double(MAX_N_FAC);
 	//af = vector_double(MAX_N_FAC);
-
-	auto cg = create_vector_double(MAX_N_PAR);
-	auto cgFirst = create_vector_double(MAX_N_PAR + 1);
-	ifp = new_matrix_int(MAX_N_FAC, 4);
-	t = new_vector_double(MAX_N_FAC);
-	f = new_vector_double(MAX_N_FAC);
-	at = new_vector_double(MAX_N_FAC);
-	af = new_vector_double(MAX_N_FAC);
-
-	//tim = vector_double(MAX_N_OBS);
-	//brightness = vector_double(MAX_N_OBS);
-	//sig = vector_double(MAX_N_OBS);
-
 	//ia = vector_int(MAX_N_PAR);
-	ia = new_vector_int(MAX_N_PAR);
+
+	//auto cg = create_vector_double(MAX_N_PAR);
+	//auto cgFirst = create_vector_double(MAX_N_PAR + 1);
+
+	//auto cg = new_vector_double(MAX_N_PAR);
+	//auto cgFirst = new_vector_double(MAX_N_PAR);
+
+	//ifp = new_matrix_int(MAX_N_FAC, 4);
+	//t = new_vector_double(MAX_N_FAC);
+	//f = new_vector_double(MAX_N_FAC);
+	//at = new_vector_double(MAX_N_FAC);
+	//af = new_vector_double(MAX_N_FAC);
+	//ia = new_vector_int(MAX_N_PAR);
+
+    std::vector<double> cg(MAX_N_PAR + 1, 0.0);
+	std::vector<double> cgFirst(MAX_N_PAR + 1, 0.0);
+
+	std::vector<std::vector<int>> ifp(MAX_N_FAC + 1, std::vector<int>(4 + 1, 0));
+	std::vector<double> t(MAX_N_FAC + 1, 0.0);
+	std::vector<double> f(MAX_N_FAC + 1, 0.0);
+	std::vector<double> at(MAX_N_FAC + 1, 0.0);
+	std::vector<double> af(MAX_N_FAC + 1, 0.0);
+	std::vector<int> ia(MAX_N_PAR + 1, 0);
 
 	double lambda_pole[N_POLES + 1] = { 0.0, 0.0, 90.0, 180.0, 270.0, 60.0, 180.0, 300.0, 60.0, 180.0, 300.0 };
 	double beta_pole[N_POLES + 1] = { 0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 60.0, 60.0, -60.0, -60.0, -60.0 };
@@ -262,27 +274,33 @@ int main(int argc, char** argv)
 		fflush(stderr);
 	}
 
+	//MakeConvexityRegularization(gl);
+
 	auto ef = ellfits();
 	//double** ee = matrix_double(gl.maxDataPoints, 3);
 	//double** ee0 = matrix_double(gl.maxDataPoints, 3);
+	//auto ee = create_matrix_double(gl.maxDataPoints, 3);
+	//auto ee0 = create_matrix_double(gl.maxDataPoints, 3);
 	//double** ee = new_matrix_double(gl.maxDataPoints, 3);
 	//double** ee0 = new_matrix_double(gl.maxDataPoints, 3);
-	auto ee = create_matrix_double(gl.maxDataPoints, 3);
-	auto ee0 = create_matrix_double(gl.maxDataPoints, 3);
+	std::vector<std::vector<double>> ee(gl.maxDataPoints + 2 + 2, std::vector<double>(3 + 1, 0.0));
+	std::vector<std::vector<double>> ee0(gl.maxDataPoints + 2 + 2, std::vector<double>(3 + 1, 0.0));
 
 	/*Time in JD*/
 	//double* tim = vector_double(gl.maxDataPoints);
+	//auto tim = create_vector_double(gl.maxDataPoints + 1);
 	//double* tim = new_vector_double(gl.maxDataPoints);
-	auto tim = create_vector_double(gl.maxDataPoints + 1);
+	std::vector<double> tim(gl.maxDataPoints + 2 + 2, 0.0);
 
 	/*Brightness*/
 	//double* brightness = vector_double(gl.maxDataPoints);
-	double* brightness = new_vector_double(gl.maxDataPoints);
+	//double* brightness = new_vector_double(gl.maxDataPoints);
+	std::vector<double> brightness(gl.maxDataPoints + 2 + 2, 0.0);
 
 	/*Mean Brightness as 'sigma'*/
 	//double* sig = vector_double(gl.maxDataPoints);
-	double* sig = new_vector_double(gl.maxDataPoints);
-
+	//double* sig = new_vector_double(gl.maxDataPoints);
+	std::vector<double> sig(gl.maxDataPoints + 2 + 2, 0.0);
 
 	// open the input file (resolve logical name first)
 	boinc_resolve_filename(input_filename, inputPath, sizeof(inputPath));
@@ -404,11 +422,12 @@ int main(int argc, char** argv)
 
 	// NOTE: light curves + geometry file
 	// NOTE: number of light curves and the first relative one
-	fscanf(infile, "%d", &gl.Lcurves);
+	int l_curves;
+	fscanf(infile, "%d", &l_curves);
 
 	if (boinc_is_standalone())
 	{
-		printf("%d  Number of light curves\n", gl.Lcurves);
+		printf("%d  Number of light curves\n", l_curves);
 	}
 
 	//if (l_curves > MAX_LC)
@@ -418,8 +437,10 @@ int main(int argc, char** argv)
 
 	//al = vector_double(gl.Lcurves);
 	//weightLc = vector_double(gl.Lcurves);
-	al = new_vector_double(gl.Lcurves);
-	weightLc = new_vector_double(gl.Lcurves);
+	//al = new_vector_double(gl.Lcurves);
+	//weightLc = new_vector_double(gl.Lcurves);
+	std::vector<double> al(gl.Lcurves + 1, 0.0);
+	std::vector<double> weightLc(gl.Lcurves + 1, 0.0);
 
 	ndata = 0;              /* total number of data */
 	k2 = 0;                 /* index */
@@ -525,9 +546,9 @@ int main(int argc, char** argv)
 	/* reads weights */
 	while (feof(infile) == 0)
 	{
-		fscanf(infile, "%d", &lcNumber);
-		fscanf(infile, "%lf", &weightLc[lcNumber]);
-		if (boinc_is_standalone())
+		int res = fscanf(infile, "%d", &lcNumber);
+		res = fscanf(infile, "%lf", &weightLc[lcNumber]);
+		if (res > 0 && boinc_is_standalone())
 		{
 			printf("Weights: Light curve[%d], Weight[%g]\n", lcNumber, weightLc[lcNumber]);
 		}
@@ -588,9 +609,10 @@ int main(int argc, char** argv)
 	/* Convexity regularization: make one last 'lightcurve' that
 	   consists of the three comps. of the residual nonconv. vect.
 	   that should all be zero */
-	gl.Lcurves = gl.Lcurves + 1;
-	gl.Lpoints[gl.Lcurves] = 3;
-	gl.Inrel[gl.Lcurves] = 0;
+	//gl.Lcurves = gl.Lcurves + 1;
+	//gl.Lpoints[gl.Lcurves] = 3;
+	//gl.Inrel[gl.Lcurves] = 0;
+	MakeConvexityRegularization(gl);
 
 	// extract a --device option
 
@@ -718,27 +740,41 @@ int main(int argc, char** argv)
 		/* Precompute some function values at each normal direction*/
 		sphfunc(num_fac, at, af);
 
-		//// *** TEST ***
-		//int ndir = 5;
-		//int ncoef = 3;
-		//double cg[3], at[6] = { 0, 1, 2, 3, 4, 5 }, af[6] = { 0, 1, 2, 3, 4, 5 };
+		//ef.er = create_vector_double(num_fac);
+		//ef.d = create_vector_double(1);
+		//ef.fitvec = create_vector_double(n_coef);
+		//ef.fmat = create_matrix_double(num_fac + 1, n_coef + 1);
+		//ef.fitmat = create_matrix_double(n_coef + 1, n_coef + 1);
 
-		//ellfit(cg, 1.0, 2.0, 3.0, ndir, ncoef, at, af);
-		//exit(0);
-		//// *** END TEST ***
-		///
-		
-		ef.er = create_vector_double(num_fac);
-		ef.d = create_vector_double(1);
-		ef.fitvec = create_vector_double(n_coef);
-		ef.fmat = create_matrix_double(num_fac + 1, n_coef + 1);
-		ef.fitmat = create_matrix_double(n_coef + 1, n_coef + 1);
+		//ef.indx = new_vector_int(n_coef);
+		//ef.er = new_vector_double(num_fac);
+		//ef.d = new_vector_double(1);
+		//ef.fitvec = new_vector_double(n_coef);
+		//ef.v = new_vector_double(n_coef);
+		//ef.fmat = new_matrix_double(num_fac, n_coef);
+		//ef.fitmat = new_matrix_double(n_coef, n_coef);
+
+		ef.indx.resize(num_fac + 1, 0);
+		ef.er.resize(num_fac + 1, 0.0);
+		ef.d.resize(1 + 1, 0.0);
+		ef.fitvec.resize(n_coef + 1, 0.0);
+		ef.v.resize(n_coef + 1, 0.0);
+		init_matrix(ef.fmat, num_fac, n_coef, 0.0);
+		init_matrix(ef.fitmat, n_coef, n_coef, 0.0);
 
 		ellfit(ef, cgFirst, a, b, cAxis, num_fac, n_coef, at, af);
 
+		//new_deallocate_vector(ef.indx);
+		//new_deallocate_vector(ef.er);
+		//new_deallocate_vector(ef.d);
+		//new_deallocate_vector(ef.fitvec);
+		//new_deallocate_vector(ef.v);
+		//new_deallocate_matrix_double(ef.fmat, num_fac);
+		//new_deallocate_matrix_double(ef.fitmat, n_coef);
+
 		startFrequency = 1 / startPeriod;
 		endFrequency = 1 / endPeriod;
-		frequencyStep = 0.5 / (jdMax - jdMin) / 24 * periodStepCoef;
+		frequencyStep = 0.5 / (jdMax - jdMin) / 24 * periodStepCoef;	// jdMin should be 2457026.1578529999
 
 		/* Give ia the value 0/1 if it's fixed/free */
 		ia[n_coef + 1] = ia_beta_pole;
@@ -842,7 +878,28 @@ int main(int argc, char** argv)
 	/* Precompute some function values at each normal direction*/
 	sphfunc(num_fac, at, af);
 
+	//ef.indx = new_vector_int(n_coef);
+	//ef.er = new_vector_double(num_fac);
+	//ef.d = new_vector_double(1);
+	//ef.fitvec = new_vector_double(n_coef);
+	//ef.fmat = new_matrix_double(num_fac + 1, n_coef + 1);
+	//ef.fitmat = new_matrix_double(n_coef + 1, n_coef + 1);
+
+	ef.indx.resize(num_fac, 0);
+	ef.er.resize(num_fac, 0.0);
+	ef.d.resize(1, 0.0);
+	ef.fitvec.resize(n_coef, 0.0);
+	init_matrix(ef.fmat, num_fac, n_coef, 0.0);
+	init_matrix(ef.fitmat, n_coef, n_coef, 0.0);
+
 	ellfit(ef, cgFirst, a, b, cAxis, num_fac, n_coef, at, af);
+
+	//new_deallocate_vector(ef.indx);
+	//new_deallocate_vector(ef.er);
+	//new_deallocate_vector(ef.d);
+	//new_deallocate_vector(ef.fitvec);
+	//new_deallocate_matrix_double(ef.fmat, num_fac + 1);
+	//new_deallocate_matrix_double(ef.fitmat, n_coef + 1);
 
 	startFrequency = 1 / startPeriod;
 	endFrequency = 1 / endPeriod;
@@ -882,26 +939,26 @@ int main(int argc, char** argv)
 	//  deallocate_matrix_double(aalpha,MAX_N_PAR);
 
 	free(stringTemp);
-	new_deallocate_vector(ia);
 
 	//new_deallocate_matrix_double(ee, 3);
 	//new_deallocate_matrix_double(ee0, 3);
-
-
-    new_deallocate_vector(weightLc);
-	new_deallocate_vector(al);
-
 	//new_deallocate_vector(tim);
-	new_deallocate_vector(brightness);
-	new_deallocate_vector(sig);
-
-    new_deallocate_matrix_int(ifp, MAX_N_FAC);
-	new_deallocate_vector(at);
-	new_deallocate_vector(af);
- //   new_deallocate_vector(cg);
+	//new_deallocate_vector(ia);
+    //new_deallocate_vector(cg);
 	//new_deallocate_vector(cgFirst);
-	new_deallocate_vector(t);
-	new_deallocate_vector(f);
+
+
+ //   new_deallocate_vector(weightLc);
+	//new_deallocate_vector(al);
+
+	//new_deallocate_vector(brightness);
+	//new_deallocate_vector(sig);
+
+ //   new_deallocate_matrix_int(ifp, MAX_N_FAC);
+	//new_deallocate_vector(at);
+	//new_deallocate_vector(af);
+	//new_deallocate_vector(t);
+	//new_deallocate_vector(f);
 
 	//auto clockRate = cudaDeviceGetAttribute()
 	boinc_fraction_done(1);

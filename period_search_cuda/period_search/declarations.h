@@ -4,18 +4,26 @@
 #include <vector>
 #include "arrayHelpers.hpp"
 
-void trifac(int nrows, int** ifp);
-void areanorm(double t[], double f[], int ndir, int nfac, int** ifp,
-    double at[], double af[]);
-void sphfunc(int ndir, double at[], double af[]);
+//void trifac(int nrows, int** ifp);
+void trifac(int nrows, std::vector<std::vector<int>>& ifp);
+//void areanorm(double t[], double f[], int ndir, int nfac, int** ifp,  double at[], double af[]);
+void areanorm(std::vector<double>& t, std::vector<double>& f, int ndir, int nfac, std::vector<std::vector<int>>& ifp, std::vector<double>& at, std::vector<double>& af);
+//void sphfunc(int ndir, double at[], double af[]);
+void sphfunc(int ndir, std::vector<double>& at, std::vector<double>& af);
 
 //void ellfit(double r[], double a, double b, double c, int ndir, int ncoef, double at[], double af[]);
-void ellfit(struct ellfits& ef, std::unique_ptr<double[]>& cg, double a, double b, double c, int ndir, int ncoef, double* at, double* af);
+//void ellfit(struct ellfits& ef, std::unique_ptr<double[]>& cg, double a, double b, double c, int ndir, int ncoef, double* at, double* af);
+//void ellfit(struct ellfits& ef, double* cg, double a, double b, double c, int ndir, int ncoef, double* at, double* af);
+void ellfit(struct ellfits& ef, std::vector<double>& cg, double a, double b, double c, int ndir, int ncoef, std::vector<double>& at, std::vector<double>& af);
 
 //void lubksb(double** a, int n, int indx[], double b[]);
 //void ludcmp(double** a, int n, int indx[], double d[]);
-void ludcmp(std::vector<std::unique_ptr<double[]>>& a, int n, int* indx, std::unique_ptr<double[]>& d);
-void lubksb(std::vector<std::unique_ptr<double[]>>& a, int n, int* indx, std::unique_ptr<double[]>& b);
+//void ludcmp(std::vector<std::unique_ptr<double[]>>& a, int n, int* indx, std::unique_ptr<double[]>& d);
+//void lubksb(std::vector<std::unique_ptr<double[]>>& a, int n, int* indx, std::unique_ptr<double[]>& b);
+//void ludcmp(struct ellfits& ef, double** a, int n, int* indx, double* d);
+//void lubksb(double** a, int n, int* indx, double* b);
+void ludcmp(struct ellfits& ef, int ncoef);
+void lubksb(struct ellfits& ef, int ncoef);
 
 int mrqmin(double** x1, double** x2, double x3[], double y[],
     double sig[], double a[], int ia[], int ma,
@@ -44,19 +52,22 @@ double*** matrix_3_double(int n_1, int n_2, int n_3);
 //void deallocate_matrix_int(int** p_x, int rows);
 void deallocate_matrix_3(void*** p_x, int n_1, int n_2);
 
-int* new_vector_int(int size);
-double* new_vector_double(int size);
-int** new_matrix_int(int rows, int cols);
-double** new_matrix_double(int rows, int cols);
-void new_deallocate_vector(int* ptr);
-void new_deallocate_vector(double* ptr);
-void new_deallocate_matrix_int(int** p_x, int rows);
-void new_deallocate_matrix_double(double** p_x, int rows);
+//int* new_vector_int(int size);
+//double* new_vector_double(int size);
+//int** new_matrix_int(int rows, int cols);
+//double** new_matrix_double(int rows, int cols);
+//void new_deallocate_vector(int* ptr);
+//void new_deallocate_vector(double* ptr);
+//void new_deallocate_matrix_int(int** p_x, int rows);
+//void new_deallocate_matrix_double(double** p_x, int rows);
 
-std::unique_ptr<int[]> create_vector_int(int size);
-std::unique_ptr<double[]> create_vector_double(int size);
-std::vector<std::unique_ptr<int[]>> create_matrix_int(int rows, int cols);
-std::vector<std::unique_ptr<double[]>> create_matrix_double(int rows, int cols);
+//std::unique_ptr<int[]> create_vector_int(int size);
+//std::unique_ptr<double[]> create_vector_double(int size);
+//std::vector<std::unique_ptr<int[]>> create_matrix_int(int rows, int cols);
+//std::vector<std::unique_ptr<double[]>> create_matrix_double(int rows, int cols);
+
+template <typename T>
+void init_matrix(std::vector<std::vector<T>>& matrix, int rows, int cols, T init_value = T{});
 
 double host_dot_product(double a[], double b[]);
 double hapke(double mi0, double mi, double alfa, double sc_param[]);

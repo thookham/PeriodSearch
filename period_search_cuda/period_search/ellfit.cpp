@@ -20,44 +20,25 @@
 
 #include "arrayHelpers.hpp"
 
-//// *** TEST ***
-//void ellfit(double cg[], double a, double b, double c, int ndir, int ncoef, double at[], double af[]) {
-//    int i;
-//    double st, sum;
-//    double* er = vector_double(ndir);
-//
-//    assert(er != nullptr);
-//    std::cout << "Memory allocated successfully" << std::endl;
-//
-//    // Compute the LOG curv. func. of the ellipsoid
-//    for (i = 1; i <= ndir; i++) {
-//        assert(i <= ndir); // Bounds check
-//        st = sin(at[i]);
-//        sum = pow(a * st * cos(af[i]), 2) + pow(b * st * sin(af[i]), 2) + pow(c * cos(at[i]), 2);
-//        er[i] = 2 * (log(a * b * c) - log(sum));
-//        std::cout << "er[" << i << "] = " << er[i] << std::endl; // Logging
-//    }
-//
-//    deallocate_vector((void*)er);
-//    std::cout << "Memory deallocated successfully" << std::endl; // Debug statement
-//}
-///// *** END TEST ***
-
 // v4
 
 //void ellfit(double cg[], double a, double b, double c, int ndir, int ncoef, double at[], double af[]) {
-void ellfit(struct ellfits& ef, std::unique_ptr<double[]>& cg, double a, double b, double c, int ndir, int ncoef, double* at, double* af) {
+//void ellfit(struct ellfits& ef, std::unique_ptr<double[]>& cg, double a, double b, double c, int ndir, int ncoef, double* at, double* af)
+//void ellfit(struct ellfits& ef, double* cg, double a, double b, double c, int ndir, int ncoef, double* at, double* af)
+void ellfit(struct ellfits& ef, std::vector<double>& cg, double a, double b, double c, int ndir, int ncoef, std::vector<double>& at, std::vector<double>& af)
+{
     int i, m, l, n, j, k;
-    int* indx = new_vector_int(ncoef);
     double sum, st;
 
+    //int* indx = new_vector_int(ncoef);
     //auto fitvec = create_vector_double(ncoef);
     //auto er     = create_vector_double(ndir);
     //auto d      = create_vector_double(1);
     //auto fmat   = create_matrix_double(ndir, ncoef);
     //auto fitmat = create_matrix_double(ncoef, ncoef);
 
-    assert(indx != nullptr && ef.fitvec != nullptr && ef.er != nullptr && ef.d != nullptr); // && fmat != nullptr && fitmat != nullptr);
+    //assert(indx != nullptr && ef.fitvec != nullptr && ef.er != nullptr && ef.d != nullptr); // && fmat != nullptr && fitmat != nullptr);
+    //assert(ef.indx != nullptr && ef.fitvec != nullptr && ef.er != nullptr && ef.d != nullptr && ef.fmat != nullptr && ef.fitmat != nullptr);
     // Check if all elements in fmat and fitmat are not null
     auto are_all_elements_non_null = [](const std::vector<std::unique_ptr<double[]>>& vec)
     {
@@ -66,7 +47,7 @@ void ellfit(struct ellfits& ef, std::unique_ptr<double[]>& cg, double a, double 
             return ptr != nullptr;
         });
     };
-    assert(are_all_elements_non_null(ef.fmat) && are_all_elements_non_null(ef.fitmat));
+    //assert(are_all_elements_non_null(ef.fmat) && are_all_elements_non_null(ef.fitmat)); // Use this with smart pointers
 
     std::cout << "Memory allocated successfully" << std::endl;
 
@@ -125,8 +106,10 @@ void ellfit(struct ellfits& ef, std::unique_ptr<double[]>& cg, double a, double 
         }
     }
 
-    ludcmp(ef.fitmat, ncoef, indx, ef.d);
-    lubksb(ef.fitmat, ncoef, indx, ef.fitvec);
+    //ludcmp(ef.fitmat, ncoef, ef.indx, ef.d);
+    ludcmp(ef, ncoef);
+    //lubksb(ef.fitmat, ncoef, ef.indx, ef.fitvec);
+    lubksb(ef, ncoef);
 
     for (i = 1; i <= ncoef; i++) {
         assert(i <= ncoef); // Bounds check

@@ -100,12 +100,17 @@ __global__ void CudaCalculateIter1Begin(void)
 	const auto CUDA_LCC = &CUDA_CC[blockIdx.x];
 	const auto CUDA_LFR = &CUDA_FR[blockIdx.x];
 
+    const int isInvalid = (*CUDA_LCC).isInvalid;
+	printf("isInvalid: %d\n", isInvalid);
+
 	if ((*CUDA_LCC).isInvalid)
 	{
 		return;
 	}
 
 	(*CUDA_LCC).isNiter = (((*CUDA_LCC).Niter < CUDA_n_iter_max) && ((*CUDA_LCC).iter_diff > CUDA_iter_diff_max)) || ((*CUDA_LCC).Niter < CUDA_n_iter_min);
+
+    printf("[%d] %d\n", blockIdx.x, (*CUDA_LCC).isNiter);
 
 	if ((*CUDA_LCC).isNiter)
 	{
@@ -123,16 +128,15 @@ __global__ void CudaCalculateIter1Begin(void)
 		{
 			atomicAdd(&CUDA_End, 1);
 #ifdef _DEBUG
-			/*const int is_precalc = CUDA_Is_Precalc;
-			if(is_precalc)
-			{
-				printf("%d ", CUDA_End);
-			}*/
+			//const int is_precalc = CUDA_Is_Precalc;
+			//if(is_precalc)
+			//{
+			//	printf("%d ", CUDA_End);
+			//}
 #endif
 			(*CUDA_LFR).isReported = 1;
 		}
 	}
-
 }
 
 __global__ void CudaCalculateIter1Mrqmin1End(void)
@@ -183,10 +187,14 @@ __global__ void CudaCalculateIter1Mrqcof1Matrix(const int lpoints)
 	if (!(*CUDA_LCC).isAlamda) return;
 
 	mrqcof_matrix(CUDA_LCC, (*CUDA_LCC).cg, lpoints);
+
+    if(blockIdx.x == 0)
+	    printf("Iter1Mrqcof1Matrix[%d][%d]\n", blockIdx.x, threadIdx.x);
 }
 
 __global__ void CudaCalculateIter1Mrqcof1Curve1(const int inrel, const int lpoints)
 {
+	//printf("Iter1Mrqcof1Curve1[%d][%d]\n", blockIdx.x, threadIdx.x);
 	const auto CUDA_LCC = &CUDA_CC[blockIdx.x];
 
 	if ((*CUDA_LCC).isInvalid) return;
@@ -200,6 +208,7 @@ __global__ void CudaCalculateIter1Mrqcof1Curve1(const int inrel, const int lpoin
 
 __global__ void CudaCalculateIter1Mrqcof1Curve1Last(const int inrel, const int lpoints)
 {
+	//printf("[%d][%d]\n", blockIdx.x, blockIdx.y);
 	const auto CUDA_LCC = &CUDA_CC[blockIdx.x];
 
 	if ((*CUDA_LCC).isInvalid) return;
@@ -271,6 +280,8 @@ __global__ void CudaCalculateIter1Mrqcof2Curve1Last(const int inrel, const int l
 __global__ void CudaCalculateIter1Mrqcof2End(void)
 {
 	const auto CUDA_LCC = &CUDA_CC[blockIdx.x];
+	printf("isInvalid %d", (*CUDA_LCC).isInvalid);
+	printf("isNiter %d", (*CUDA_LCC).isNiter);
 
 	if ((*CUDA_LCC).isInvalid) return;
 

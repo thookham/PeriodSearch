@@ -88,13 +88,13 @@ __device__ void matrix_neo(freq_context* CUDA_LCC, double cg[], int lnp1, int Lp
         pom += tmat * ee_2;
         pom0 += tmat * ee0_2;
         tmat = cf * (*CUDA_LCC).Dblm[1][1][3] + sf * (*CUDA_LCC).Dblm[1][2][3] + 0 * (*CUDA_LCC).Dblm[1][3][3];
-        //(*CUDA_LCC).de[jp][1][1] = pom+tmat * ee_3;
-        //(*CUDA_LCC).de0[jp][1][1] =pom0+tmat * ee0_3;
+        (*CUDA_LCC).de[jp][1][1] = pom+tmat * ee_3;
+        (*CUDA_LCC).de0[jp][1][1] =pom0+tmat * ee0_3;
 
         // NOTE: Calculate the linear index as index = jp * (dimY * dimZ) + y * dimZ + z.
-        int li = jp * (4 * 4) + 1 * 4 + 1;
-        (*CUDA_LCC).de[li] = pom + tmat * ee_3;
-        (*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
+        //int li = jp * (4 * 4) + 1 * 4 + 1;
+        //(*CUDA_LCC).de[li] = pom + tmat * ee_3;
+        //(*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
 
         tmat = cf * (*CUDA_LCC).Dblm[2][1][1] + sf * (*CUDA_LCC).Dblm[2][2][1] + 0 * (*CUDA_LCC).Dblm[2][3][1];
         pom = tmat * ee_1;
@@ -103,11 +103,11 @@ __device__ void matrix_neo(freq_context* CUDA_LCC, double cg[], int lnp1, int Lp
         pom += tmat * ee_2;
         pom0 += tmat * ee0_2;
         tmat = cf * (*CUDA_LCC).Dblm[2][1][3] + sf * (*CUDA_LCC).Dblm[2][2][3] + 0 * (*CUDA_LCC).Dblm[2][3][3];
-        //(*CUDA_LCC).de[jp][1][2] = pom+tmat * ee_3;
-        //(*CUDA_LCC).de0[jp][1][2] = pom0+tmat * ee0_3;
-        li = jp * (4 * 4) + 1 * 4 + 2;
-        (*CUDA_LCC).de[li] = pom + tmat * ee_3;
-        (*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
+        (*CUDA_LCC).de[jp][1][2] = pom+tmat * ee_3;
+        (*CUDA_LCC).de0[jp][1][2] = pom0+tmat * ee0_3;
+        //li = jp * (4 * 4) + 1 * 4 + 2;
+        //(*CUDA_LCC).de[li] = pom + tmat * ee_3;
+        //(*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
 
         tmat = (-t * sf) * (*CUDA_LCC).Blmat[1][1] + (t * cf) * (*CUDA_LCC).Blmat[2][1] + 0 * (*CUDA_LCC).Blmat[3][1];
         pom = tmat * ee_1;
@@ -116,11 +116,11 @@ __device__ void matrix_neo(freq_context* CUDA_LCC, double cg[], int lnp1, int Lp
         pom += tmat * ee_2;
         pom0 += tmat * ee0_2;
         tmat = (-t * sf) * (*CUDA_LCC).Blmat[1][3] + (t * cf) * (*CUDA_LCC).Blmat[2][3] + 0 * (*CUDA_LCC).Blmat[3][3];
-        //(*CUDA_LCC).de[jp][1][3] = pom+tmat * ee_3;
-        //(*CUDA_LCC).de0[jp][1][3] = pom0+tmat * ee0_3;
-        li = jp * (4 * 4) + 1 * 4 + 3;
-        (*CUDA_LCC).de[li] = pom + tmat * ee_3;
-        (*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
+        (*CUDA_LCC).de[jp][1][3] = pom+tmat * ee_3;
+        (*CUDA_LCC).de0[jp][1][3] = pom0+tmat * ee0_3;
+        //li = jp * (4 * 4) + 1 * 4 + 3;
+        //(*CUDA_LCC).de[li] = pom + tmat * ee_3;
+        //(*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
 
         tmat = -sf * (*CUDA_LCC).Dblm[1][1][1] + cf * (*CUDA_LCC).Dblm[1][2][1] + 0 * (*CUDA_LCC).Dblm[1][3][1];
         pom = tmat * ee_1;
@@ -129,11 +129,11 @@ __device__ void matrix_neo(freq_context* CUDA_LCC, double cg[], int lnp1, int Lp
         pom += tmat * ee_2;
         pom0 += tmat * ee0_2;
         tmat = -sf * (*CUDA_LCC).Dblm[1][1][3] + cf * (*CUDA_LCC).Dblm[1][2][3] + 0 * (*CUDA_LCC).Dblm[1][3][3];
-        //(*CUDA_LCC).de[jp][2][1] = pom+tmat * ee_3;
-        //(*CUDA_LCC).de0[jp][2][1] = pom0+tmat * ee0_3;
-        li = jp * (4 * 4) + 2 * 4 + 1;
-        (*CUDA_LCC).de[li] = pom + tmat * ee_3;
-        (*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
+        (*CUDA_LCC).de[jp][2][1] = pom+tmat * ee_3;
+        (*CUDA_LCC).de0[jp][2][1] = pom0+tmat * ee0_3;
+        //li = jp * (4 * 4) + 2 * 4 + 1;
+        //(*CUDA_LCC).de[li] = pom + tmat * ee_3;
+        //(*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
 
         tmat = -sf * (*CUDA_LCC).Dblm[2][1][1] + cf * (*CUDA_LCC).Dblm[2][2][1] + 0 * (*CUDA_LCC).Dblm[2][3][1];
         pom = tmat * ee_1;
@@ -142,11 +142,11 @@ __device__ void matrix_neo(freq_context* CUDA_LCC, double cg[], int lnp1, int Lp
         pom += tmat * ee_2;
         pom0 += tmat * ee0_2;
         tmat = -sf * (*CUDA_LCC).Dblm[2][1][3] + cf * (*CUDA_LCC).Dblm[2][2][3] + 0 * (*CUDA_LCC).Dblm[2][3][3];
-        //(*CUDA_LCC).de[jp][2][2] = pom+tmat * ee_3;
-        //(*CUDA_LCC).de0[jp][2][2] = pom0+tmat * ee0_3;
-        li = jp * (4 * 4) + 2 * 4 + 2;
-        (*CUDA_LCC).de[li] = pom + tmat * ee_3;
-        (*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
+        (*CUDA_LCC).de[jp][2][2] = pom+tmat * ee_3;
+        (*CUDA_LCC).de0[jp][2][2] = pom0+tmat * ee0_3;
+        //li = jp * (4 * 4) + 2 * 4 + 2;
+        //(*CUDA_LCC).de[li] = pom + tmat * ee_3;
+        //(*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
 
         tmat = (-t * cf) * (*CUDA_LCC).Blmat[1][1] + (-t * sf) * (*CUDA_LCC).Blmat[2][1] + 0 * (*CUDA_LCC).Blmat[3][1];
         pom = tmat * ee_1;
@@ -155,11 +155,11 @@ __device__ void matrix_neo(freq_context* CUDA_LCC, double cg[], int lnp1, int Lp
         pom += tmat * ee_2;
         pom0 += tmat * ee0_2;
         tmat = (-t * cf) * (*CUDA_LCC).Blmat[1][3] + (-t * sf) * (*CUDA_LCC).Blmat[2][3] + 0 * (*CUDA_LCC).Blmat[3][3];
-        //(*CUDA_LCC).de[jp][2][3] = pom+tmat * ee_3;
-        //(*CUDA_LCC).de0[jp][2][3] = pom0+tmat * ee0_3;
-        li = jp * (4 * 4) + 2 * 4 + 3;
-        (*CUDA_LCC).de[li] = pom + tmat * ee_3;
-        (*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
+        (*CUDA_LCC).de[jp][2][3] = pom+tmat * ee_3;
+        (*CUDA_LCC).de0[jp][2][3] = pom0+tmat * ee0_3;
+        //li = jp * (4 * 4) + 2 * 4 + 3;
+        //(*CUDA_LCC).de[li] = pom + tmat * ee_3;
+        //(*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
 
         tmat = 0 * (*CUDA_LCC).Dblm[1][1][1] + 0 * (*CUDA_LCC).Dblm[1][2][1] + 1 * (*CUDA_LCC).Dblm[1][3][1];
         pom = tmat * ee_1;
@@ -168,11 +168,11 @@ __device__ void matrix_neo(freq_context* CUDA_LCC, double cg[], int lnp1, int Lp
         pom += tmat * ee_2;
         pom0 += tmat * ee0_2;
         tmat = 0 * (*CUDA_LCC).Dblm[1][1][3] + 0 * (*CUDA_LCC).Dblm[1][2][3] + 1 * (*CUDA_LCC).Dblm[1][3][3];
-        //(*CUDA_LCC).de[jp][3][1] = pom+tmat * ee_3;
-        //(*CUDA_LCC).de0[jp][3][1] = pom0+tmat * ee0_3;
-        li = jp * (4 * 4) + 3 * 4 + 1;
-        (*CUDA_LCC).de[li] = pom + tmat * ee_3;
-        (*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
+        (*CUDA_LCC).de[jp][3][1] = pom+tmat * ee_3;
+        (*CUDA_LCC).de0[jp][3][1] = pom0+tmat * ee0_3;
+        //li = jp * (4 * 4) + 3 * 4 + 1;
+        //(*CUDA_LCC).de[li] = pom + tmat * ee_3;
+        //(*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
 
         tmat = 0 * (*CUDA_LCC).Dblm[2][1][1] + 0 * (*CUDA_LCC).Dblm[2][2][1] + 1 * (*CUDA_LCC).Dblm[2][3][1];
         pom = tmat * ee_1;
@@ -181,11 +181,11 @@ __device__ void matrix_neo(freq_context* CUDA_LCC, double cg[], int lnp1, int Lp
         pom += tmat * ee_2;
         pom0 += tmat * ee0_2;
         tmat = 0 * (*CUDA_LCC).Dblm[2][1][3] + 0 * (*CUDA_LCC).Dblm[2][2][3] + 1 * (*CUDA_LCC).Dblm[2][3][3];
-        //(*CUDA_LCC).de[jp][3][2] = pom+tmat * ee_3;
-        //(*CUDA_LCC).de0[jp][3][2] = pom0+tmat * ee0_3;
-        li = jp * (4 * 4) + 3 * 4 + 2;
-        (*CUDA_LCC).de[li] = pom + tmat * ee_3;
-        (*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
+        (*CUDA_LCC).de[jp][3][2] = pom+tmat * ee_3;
+        (*CUDA_LCC).de0[jp][3][2] = pom0+tmat * ee0_3;
+        //li = jp * (4 * 4) + 3 * 4 + 2;
+        //(*CUDA_LCC).de[li] = pom + tmat * ee_3;
+        //(*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
 
         tmat = 0 * (*CUDA_LCC).Blmat[1][1] + 0 * (*CUDA_LCC).Blmat[2][1] + 0 * (*CUDA_LCC).Blmat[3][1];
         pom = tmat * ee_1;
@@ -194,11 +194,11 @@ __device__ void matrix_neo(freq_context* CUDA_LCC, double cg[], int lnp1, int Lp
         pom += tmat * ee_2;
         pom0 += tmat * ee0_2;
         tmat = 0 * (*CUDA_LCC).Blmat[1][3] + 0 * (*CUDA_LCC).Blmat[2][3] + 0 * (*CUDA_LCC).Blmat[3][3];
-        //(*CUDA_LCC).de[jp][3][3] = pom+tmat * ee_3;
-        //(*CUDA_LCC).de0[jp][3][3] = pom0+tmat * ee0_3;
-        li = jp * (4 * 4) + 3 * 4 + 3;
-        (*CUDA_LCC).de[li] = pom + tmat * ee_3;
-        (*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
+        (*CUDA_LCC).de[jp][3][3] = pom+tmat * ee_3;
+        (*CUDA_LCC).de0[jp][3][3] = pom0+tmat * ee0_3;
+        //li = jp * (4 * 4) + 3 * 4 + 3;
+        //(*CUDA_LCC).de[li] = pom + tmat * ee_3;
+        //(*CUDA_LCC).de0[li] = pom0 + tmat * ee0_3;
 
     }
     __syncthreads();
@@ -224,34 +224,34 @@ __device__ double bright(freq_context* CUDA_LCC, double cg[], int jp, int Lpoint
     e0_2 = (*CUDA_LCC).e0_2[jp];
     e0_3 = (*CUDA_LCC).e0_3[jp];
 
-    for (int i = 1; i <= 3; ++i) {
-        for (int j = 1; j <= 3; ++j) {
-            int li = jp * 16 + i * 4 + j;
-            de[i][j] = (*CUDA_LCC).de[li];
-            de0[i][j] = (*CUDA_LCC).de0[li];
-        }
-    }
+    //for (int i = 1; i <= 3; ++i) {
+    //    for (int j = 1; j <= 3; ++j) {
+    //        int li = jp * 16 + i * 4 + j;
+    //        de[i][j] = (*CUDA_LCC).de[li];
+    //        de0[i][j] = (*CUDA_LCC).de0[li];
+    //    }
+    //}
 
 
     //int li = jp * (4 * 4) + 1 * 4 + 1;
-    //de[1][1]=(*CUDA_LCC).de[jp][1][1];
-    //de[1][2]=(*CUDA_LCC).de[jp][1][2];
-    //de[1][3]=(*CUDA_LCC).de[jp][1][3];
-    //de[2][1]=(*CUDA_LCC).de[jp][2][1];
-    //de[2][2]=(*CUDA_LCC).de[jp][2][2];
-    //de[2][3]=(*CUDA_LCC).de[jp][2][3];
-    //de[3][1]=(*CUDA_LCC).de[jp][3][1];
-    //de[3][2]=(*CUDA_LCC).de[jp][3][2];
-    //de[3][3]=(*CUDA_LCC).de[jp][3][3];
-    //de0[1][1]=(*CUDA_LCC).de0[jp][1][1];
-    //de0[1][2]=(*CUDA_LCC).de0[jp][1][2];
-    //de0[1][3]=(*CUDA_LCC).de0[jp][1][3];
-    //de0[2][1]=(*CUDA_LCC).de0[jp][2][1];
-    //de0[2][2]=(*CUDA_LCC).de0[jp][2][2];
-    //de0[2][3]=(*CUDA_LCC).de0[jp][2][3];
-    //de0[3][1]=(*CUDA_LCC).de0[jp][3][1];
-    //de0[3][2]=(*CUDA_LCC).de0[jp][3][2];
-    //de0[3][3]=(*CUDA_LCC).de0[jp][3][3];
+    de[1][1]=(*CUDA_LCC).de[jp][1][1];
+    de[1][2]=(*CUDA_LCC).de[jp][1][2];
+    de[1][3]=(*CUDA_LCC).de[jp][1][3];
+    de[2][1]=(*CUDA_LCC).de[jp][2][1];
+    de[2][2]=(*CUDA_LCC).de[jp][2][2];
+    de[2][3]=(*CUDA_LCC).de[jp][2][3];
+    de[3][1]=(*CUDA_LCC).de[jp][3][1];
+    de[3][2]=(*CUDA_LCC).de[jp][3][2];
+    de[3][3]=(*CUDA_LCC).de[jp][3][3];
+    de0[1][1]=(*CUDA_LCC).de0[jp][1][1];
+    de0[1][2]=(*CUDA_LCC).de0[jp][1][2];
+    de0[1][3]=(*CUDA_LCC).de0[jp][1][3];
+    de0[2][1]=(*CUDA_LCC).de0[jp][2][1];
+    de0[2][2]=(*CUDA_LCC).de0[jp][2][2];
+    de0[2][3]=(*CUDA_LCC).de0[jp][2][3];
+    de0[3][1]=(*CUDA_LCC).de0[jp][3][1];
+    de0[3][2]=(*CUDA_LCC).de0[jp][3][2];
+    de0[3][3]=(*CUDA_LCC).de0[jp][3][3];
 
     /* Directions (and ders.) in the rotating system */
 

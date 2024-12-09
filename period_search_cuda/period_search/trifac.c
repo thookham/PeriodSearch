@@ -8,13 +8,15 @@
 #include "globals.h"
 #include "declarations.h"
 
-void trifac(int nrows, int **ifp)
+//void trifac(int nrows, int **ifp)
+void trifac(int nrows, std::vector<std::vector<int>>& ifp)
 {
    int nnod, i, j, j0, j1, j2, j3, ntri;
 
-   int **nod;
+   //int **nod;
 
-   nod = new_matrix_int(2*nrows, 4*nrows);
+   //nod = new_matrix_int(2*nrows, 4*nrows);
+   std::vector<std::vector<int>> nod(2 * nrows + 1, std::vector<int>(4 * nrows + 1, 0));
 
    nnod = 1; /* index from 1 to number of vertices */
    nod[0][0] = nnod;
@@ -79,5 +81,5 @@ void trifac(int nrows, int **ifp)
          }
       }
 
-   new_deallocate_matrix_int(nod, 2*nrows);
+   //new_deallocate_matrix_int(nod, 2*nrows);
 }

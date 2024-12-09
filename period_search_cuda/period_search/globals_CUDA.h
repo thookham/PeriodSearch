@@ -119,18 +119,23 @@ struct freq_context
 	double dyda[MAX_N_PAR + 1], dave[MAX_N_PAR + 1];
 	double trial_chisq, ave;
 	int np, np1, np2;
-	double* e_1;
-	double* e_2;
-	double* e_3;
-	double* e0_1;
-	double* e0_2;
-    double* e0_3;
-	double* jp_Scale;
-	double* jp_dphp_1;
-	double* jp_dphp_2;
-    double* jp_dphp_3;
-	double* de;
-	double* de0;
+	// bright
+	double e_1[POINTS_MAX + 1], e_2[POINTS_MAX + 1], e_3[POINTS_MAX + 1], e0_1[POINTS_MAX + 1], e0_2[POINTS_MAX + 1], e0_3[POINTS_MAX + 1];
+    double de[POINTS_MAX + 1][4][4], de0[POINTS_MAX + 1][4][4];
+	double jp_Scale[POINTS_MAX + 1];
+	double jp_dphp_1[POINTS_MAX + 1], jp_dphp_2[POINTS_MAX + 1], jp_dphp_3[POINTS_MAX + 1];
+	//double* e_1;
+	//double* e_2;
+	//double* e_3;
+	//double* e0_1;
+	//double* e0_2;
+ //   double* e0_3;
+	//double* jp_Scale;
+	//double* jp_dphp_1;
+	//double* jp_dphp_2;
+ //   double* jp_dphp_3;
+	//double* de;
+	//double* de0;
 
 	// gaus
 	int indxc[MAX_N_PAR + 1], indxr[MAX_N_PAR + 1], ipiv[MAX_N_PAR + 1];

@@ -19,29 +19,43 @@
 #include <exception>
 #include <vector>
 
-std::unique_ptr<int[]> create_vector_int(int size) {
-    return std::make_unique<int[]>(size + 1); // +1 for 1-based indexing, zero-initialized
-}
+#include <vector>
 
-std::unique_ptr<double[]> create_vector_double(int size) {
-    return std::make_unique<double[]>(size + 1); // +1 for 1-based indexing, zero-initialized
-}
+// Template function to initialize a 2D vector (matrix) in any structure
+template <typename T>
+void init_matrix(std::vector<std::vector<T>>& matrix, int rows, int cols, T init_value = T{})
+{
+    matrix.resize(rows + 1); // Resize the outer vector
 
-std::vector<std::unique_ptr<int[]>> create_matrix_int(int rows, int cols) {
-    std::vector<std::unique_ptr<int[]>> mat(rows + 1);
-    for (int i = 0; i <= rows; ++i) {
-        mat[i] = std::make_unique<int[]>(cols + 1); // +1 for  1-based indexing, zero-initialized
+    for (int i = 0; i < rows + 1; ++i) {
+        matrix[i].resize(cols + 1, init_value); // Resize and initialize each inner vector with the specified value
     }
-    return mat;
 }
 
-std::vector<std::unique_ptr<double[]>> create_matrix_double(int rows, int cols) {
-    std::vector<std::unique_ptr<double[]>> mat(rows + 1);
-    for (int i = 0; i <= rows; ++i) {
-        mat[i] = std::make_unique<double[]>(cols + 1); // +1 for 1-based indexing, zero-initialized
-    }
-    return mat;
-}
+
+//std::unique_ptr<int[]> create_vector_int(int size) {
+//    return std::make_unique<int[]>(size + 1); // +1 for 1-based indexing, zero-initialized
+//}
+//
+//std::unique_ptr<double[]> create_vector_double(int size) {
+//    return std::make_unique<double[]>(size + 1); // +1 for 1-based indexing, zero-initialized
+//}
+//
+//std::vector<std::unique_ptr<int[]>> create_matrix_int(int rows, int cols) {
+//    std::vector<std::unique_ptr<int[]>> mat(rows + 1);
+//    for (int i = 0; i <= rows; ++i) {
+//        mat[i] = std::make_unique<int[]>(cols + 1); // +1 for  1-based indexing, zero-initialized
+//    }
+//    return mat;
+//}
+//
+//std::vector<std::unique_ptr<double[]>> create_matrix_double(int rows, int cols) {
+//    std::vector<std::unique_ptr<double[]>> mat(rows + 1);
+//    for (int i = 0; i <= rows; ++i) {
+//        mat[i] = std::make_unique<double[]>(cols + 1); // +1 for 1-based indexing, zero-initialized
+//    }
+//    return mat;
+//}
 
 int* new_vector_int(int size) {
     return new int[size + 1](); // +1 for 1-based indexing, zero-initialized
@@ -69,24 +83,31 @@ double** new_matrix_double(int rows, int cols) {
 
 void new_deallocate_vector(int* ptr) {
     delete[] ptr;
+    ptr = nullptr;
 }
 
 void new_deallocate_vector(double* ptr) {
     delete[] ptr;
+    ptr = nullptr;
 }
 
 void new_deallocate_matrix_int(int** p_x, int rows) {
-    for (int i = 0; i <= rows; i++) {
+    for (int i = 0; i <= rows; i++) 
+    {
         delete[] p_x[i];
     }
+
     delete[] p_x;
+    p_x = nullptr;
 }
 
 void new_deallocate_matrix_double(double** p_x, int rows) {
     for (int i = 0; i <= rows; i++) {
         delete[] p_x[i];
     }
+
     delete[] p_x;
+    p_x = nullptr;
 }
 
 

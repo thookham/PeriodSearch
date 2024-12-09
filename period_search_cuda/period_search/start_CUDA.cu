@@ -127,7 +127,7 @@ struct CudaDeleter
 };
 
 // Allocation function using unique_ptr and custom deleter for CUDA device memory
-std::unique_ptr<double[], CudaDeleter> cuda_malloc_double(size_t size)
+std::unique_ptr<double[], CudaDeleter> cuda_malloc_double_smart(size_t size)
 {
     double* dev_ptr;
     cudaMalloc(reinterpret_cast<void**>(&dev_ptr), size * sizeof(double));
@@ -135,7 +135,7 @@ std::unique_ptr<double[], CudaDeleter> cuda_malloc_double(size_t size)
     return std::unique_ptr<double[], CudaDeleter>(dev_ptr);
 }
 
-cudaError_t copy_vector_to_device(std::unique_ptr<double[], CudaDeleter>& device_ptr, const std::unique_ptr<double[]>& host_vector, int size) {
+cudaError_t copy_vector_to_device_smart(std::unique_ptr<double[], CudaDeleter>& device_ptr, const std::unique_ptr<double[]>& host_vector, int size) {
     cudaError_t err = cudaMemcpy(device_ptr.get(), host_vector.get(), size * sizeof(double), cudaMemcpyHostToDevice);
 
     return err;
@@ -155,6 +155,60 @@ cudaError_t copy_matrix_to_device(const std::unique_ptr<double[], CudaDeleter>& 
     }
 
     return cudaSuccess;
+}
+
+// Flatten the 2D vector into a 1D array
+std::vector<double> flatten_2D_vector(const std::vector<std::vector<double>>& vec)
+{
+    std::vector<double> flat;
+    for (const auto& row : vec)
+    {
+        flat.insert(flat.end(), row.begin(), row.end());
+    }
+
+    return flat;
+}
+
+void CudaErrorHandler(cudaError err)
+{
+    if (err != cudaSuccess)
+    {
+        char message[100];
+        std::cerr << "CUDA error: " << cudaGetErrorString(err) << std::endl; // Handle the error (e.g., throw an exception or exit the program)
+        sprintf(message, "Something went wrong: cuda function return %d", err);
+        fprintf(stderr, message);
+        throw std::runtime_error(message);
+    }
+}
+
+// Allocation function using raw pointer for CUDA device memory
+template <typename T>
+T* CudaMalloc(size_t size)
+{
+    T* dev_ptr;
+    cudaError err = cudaMalloc(reinterpret_cast<void**>(&dev_ptr), size * sizeof(T));
+    CudaErrorHandler(err);
+
+    return dev_ptr;
+}
+
+// Copy data from host to device
+template <typename T>
+void CudaMemcpy(T* device_ptr, const T* host_ptr, size_t size)
+{
+    cudaError err = cudaMemcpy(device_ptr, host_ptr, size * sizeof(T), cudaMemcpyHostToDevice);
+    CudaErrorHandler(err);
+}
+
+// Generic function to copy device pointer to CUDA symbol
+template <typename D, typename T>
+void CudaMemcpyToSymbol(D& device_symbol, T* device_ptr)
+{
+    //auto symbol = CUDA_tim;
+    //auto eq = symbol == device_symbol;
+
+    cudaError err = cudaMemcpyToSymbol(device_symbol, &device_ptr, sizeof(T*));
+    CudaErrorHandler(err);
 }
 
 // NOTE: https://boinc.berkeley.edu/trac/wiki/CudaApps
@@ -178,8 +232,14 @@ bool SetCUDABlockingSync(const int device)
     return true;
 }
 
+//int CUDAPrepare(int cudadev, double* beta_pole, double* lambda_pole, double* par, double cl, double Alamda_start, double Alamda_incr,
+//    std::vector<std::unique_ptr<double[]>>& ee, std::vector<std::unique_ptr<double[]>>& ee0, std::unique_ptr<double[]>& tim, 
+//    double Phi_0, int checkex, int ndata, struct globals& gl)
+//int CUDAPrepare(int cudadev, double* beta_pole, double* lambda_pole, double* par, double cl, double Alamda_start, double Alamda_incr,
+//    double** ee, double** ee0, double* tim,
+//    double Phi_0, int checkex, int ndata, struct globals& gl)
 int CUDAPrepare(int cudadev, double* beta_pole, double* lambda_pole, double* par, double cl, double Alamda_start, double Alamda_incr,
-    std::vector<std::unique_ptr<double[]>>& ee, std::vector<std::unique_ptr<double[]>>& ee0, std::unique_ptr<double[]>& tim, 
+    std::vector<std::vector<double>>& ee, std::vector<std::vector<double>>& ee0, std::vector<double>& tim,
     double Phi_0, int checkex, int ndata, struct globals& gl)
 {
     //init gpu
@@ -282,41 +342,54 @@ int CUDAPrepare(int cudadev, double* beta_pole, double* lambda_pole, double* par
     //res = cudaMemcpyToSymbol(CUDA_tim, tim, sizeof(double) * (gl.maxDataPoints + 1));
 
     // Copy tim data to device (allocate device memory for tim)
-    auto p_tim = cuda_malloc_double(ndata + 1);
-    res = cudaMemcpy(p_tim.get(), tim.get(), (ndata + 1) * sizeof(double), cudaMemcpyHostToDevice);
-    res = cudaMemcpyToSymbol(CUDA_tim, &p_tim, sizeof(p_tim));
-
+    auto p_tim = CudaMalloc<double>(tim.size());
+    //res = cudaMemcpy(p_tim.get(), tim.get(), (gl.maxDataPoints + 1) * sizeof(double), cudaMemcpyHostToDevice);
+    CudaMemcpy(p_tim, tim.data(), tim.size()); // tim.size() == (gl.maxDataPoints + 1)
+    //res = cudaMemcpyToSymbol(CUDA_tim, &p_tim, sizeof(p_tim));
+    CudaMemcpyToSymbol(CUDA_tim, p_tim);
 
     //res = cudaMalloc(&pWeight, (ndata + 3 + 1) * sizeof(double));
     //gl.Weight = std::make_unique<double[]>(ndata + 3 + 1);
     //res = cudaMemcpy(pWeight, gl.Weight.get(), (ndata + 3 + 1) * sizeof(double), cudaMemcpyHostToDevice);
     //res = cudaMemcpyToSymbol(CUDA_Weight, &pWeight, sizeof(pWeight));
 
-    auto device_pWeight = cuda_malloc_double(ndata + 3 + 1);
-    pWeight = device_pWeight.get();
-    res = copy_vector_to_device(device_pWeight, gl.Weight, ndata + 3 + 1);
-    res = cudaMemcpyToSymbol(CUDA_Weight, &pWeight, sizeof(pWeight));
+    //auto device_pWeight = cuda_malloc_double(ndata + 3 + 1);
+    //pWeight = device_pWeight.get();
+    //res = copy_vector_to_device(device_pWeight, gl.Weight, ndata + 3 + 1);
+    pWeight = CudaMalloc<double>(gl.Weight.size());
+    CudaMemcpy(pWeight, gl.Weight.data(), gl.Weight.size()); // gl.Weight.size() == (ndata + 3 + 1) 
+    CudaMemcpyToSymbol(CUDA_Weight, pWeight);
 
     //res = cudaMalloc(&pee, (ndata + 1) * 3 * sizeof(double));
     //res = cudaMemcpy(pee, ee, (ndata + 1) * 3 * sizeof(double), cudaMemcpyHostToDevice);
     //res = cudaMemcpyToSymbol(CUDA_ee, &pee, sizeof(void*));
-    
-    auto device_pee = cuda_malloc_double((ndata + 1) * 3);  // Allocate device memory
-    pee = device_pee.get();
-    res = copy_matrix_to_device(device_pee, ee, ndata, 3);         // Use the helper function to copy host data to device
-    res = cudaMemcpyToSymbol(CUDA_ee, &pee, sizeof(pee));   // Set the device symbol CUDA_ee with the device pointer `pee`
 
-    auto device_pee0 = cuda_malloc_double((ndata + 1) * 3);
-    pee0 = device_pee0.get();
-    res = copy_matrix_to_device(device_pee0, ee0, ndata, 3);
-    res = cudaMemcpyToSymbol(CUDA_ee0, &pee0, sizeof(pee0));
+    //auto device_pee = cuda_malloc_double((ndata + 1) * 3);  // Allocate device memory
+    //pee = device_pee.get();
+    //res = copy_matrix_to_device(device_pee, ee, ndata, 3);         // Use the helper function to copy host data to device
+    std::vector<double> flat_ee = flatten_2D_vector(ee);
+    pee = CudaMalloc<double>(flat_ee.size());
+    CudaMemcpy(pee, flat_ee.data(), flat_ee.size());
+    CudaMemcpyToSymbol(CUDA_ee, &pee);   // Set the device symbol CUDA_ee with the device pointer `pee`
 
-    if (res == cudaSuccess)
+    //auto device_pee0 = cuda_malloc_double((ndata + 1) * 3);
+    //pee0 = device_pee0.get();
+    //res = copy_matrix_to_device(device_pee0, ee0, ndata, 3);
+    std::vector<double> flat_ee0 = flatten_2D_vector(ee0);
+    pee0 = CudaMalloc<double>(flat_ee0.size());
+    //copy_to_device(pee0, flat_ee0.data, flat_ee0.size());
+    CudaMemcpy(pee0, flat_ee0.data(), flat_ee0.size());
+    CudaMemcpyToSymbol(CUDA_ee0, &pee0);
+
+    // Optional: Check for CUDA errors
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess)
     {
-        return 1;
+        std::cerr << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+        return 0;
     }
 
-    return 0;
+    return 1;
 }
 
 void CUDAUnprepare(void)
@@ -326,8 +399,13 @@ void CUDAUnprepare(void)
     //cudaFree(pWeight);
 }
 
+//int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_step, double stop_condition, int n_iter_min, double* conw_r,
+//    int ndata, int* ia, int* ia_par, int* new_conw, std::unique_ptr<double[]>& cg_first, double* sig, int Numfac, double* brightness, struct globals& gl)
+//int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_step, double stop_condition, int n_iter_min, double* conw_r,
+//    int ndata, int* ia, int* ia_par, int* new_conw, double* cg_first, double* sig, int Numfac, double* brightness, struct globals& gl)
 int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_step, double stop_condition, int n_iter_min, double* conw_r,
-    int ndata, int* ia, int* ia_par, int* new_conw, std::unique_ptr<double[]>& cg_first, double* sig, int Numfac, double* brightness, struct globals& gl)
+    int ndata, std::vector<int>& ia, int* ia_par, int* new_conw, std::vector<double>& cg_first, std::vector<double>& sig,
+    int Numfac, std::vector<double>& brightness, struct globals& gl)
 {
     //int* endPtr;
     int max_test_periods, iC, theEnd;
@@ -336,7 +414,7 @@ int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_ste
     int n_iter_max;
     double iter_diff_max;
     freq_result* res;
-    void* pcc, * pfr, * pbrightness, * psig;
+    void* pcc, * pfr; //* pbrightness, , * psig
 
     // NOTE: max_test_periods dictates the CUDA_Grid_dim_precalc value which is actual Threads-per-Block
     /*	Cuda Compute profiler gives the following advice for almost every kernel launched:
@@ -394,12 +472,12 @@ int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_ste
     cudaMemcpyToSymbol(CUDA_Numfac, &Numfac, sizeof(Numfac));
     m = Numfac + 1;
     cudaMemcpyToSymbol(CUDA_Numfac1, &m, sizeof(m));
-    cudaMemcpyToSymbol(CUDA_ia, ia, sizeof(int) * (MAX_N_PAR + 1));
+    cudaMemcpyToSymbol(CUDA_ia, ia.data(), sizeof(int) * (MAX_N_PAR + 1));
+    cudaMemcpyToSymbol(CUDA_cg_first, cg_first.data(), sizeof(double) * (MAX_N_PAR + 1));
 
-    //cudaMemcpyToSymbol(CUDA_cg_first, cg_first, sizeof(double) * (MAX_N_PAR + 1));
-    auto p_cg_first = cuda_malloc_double(MAX_N_PAR + 1);
-    copy_vector_to_device(p_cg_first, cg_first, ndata + 1);
-    cudaMemcpyToSymbol(CUDA_cg_first, &p_cg_first, sizeof(p_cg_first));
+    //auto p_cg_first = cuda_malloc_double(MAX_N_PAR + 1);
+    //copy_vector_to_device(p_cg_first, cg_first, ndata + 1);
+    //cudaMemcpyToSymbol(CUDA_cg_first, &p_cg_first, sizeof(p_cg_first));
 
     cudaMemcpyToSymbol(CUDA_n_iter_max, &n_iter_max, sizeof(n_iter_max));
     cudaMemcpyToSymbol(CUDA_n_iter_min, &n_iter_min, sizeof(n_iter_min));
@@ -419,16 +497,16 @@ int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_ste
       cudaMemcpyToSymbol(sh_irow, sh_irow_local, sizeof(int) * CUDA_BLOCK_DIM);
       cudaMemcpyToSymbol(sh_big, sh_big_local, sizeof(double) * CUDA_BLOCK_DIM);*/
 
-    err = cudaMalloc(&pbrightness, (ndata + 1) * sizeof(double));
-    err = cudaMemcpy(pbrightness, brightness, (ndata + 1) * sizeof(double), cudaMemcpyHostToDevice);
-    err = cudaMemcpyToSymbol(CUDA_brightness, &pbrightness, sizeof(pbrightness));
-    //err = cudaBindTexture(0, texbrightness, pbrightness, (ndata + 1) * sizeof(double));
+    auto pbrightness = CudaMalloc<double>(ndata + 1);
+    //err = cudaMemcpy(pbrightness, brightness.data(), (ndata + 1) * sizeof(double), cudaMemcpyHostToDevice);
+    CudaMemcpy(pbrightness, brightness.data(), ndata + 1);
+    CudaMemcpyToSymbol(CUDA_brightness, &pbrightness);
 
-    err = cudaMalloc(&psig, (ndata + 1) * sizeof(double));
-    err = cudaMemcpy(psig, sig, (ndata + 1) * sizeof(double), cudaMemcpyHostToDevice);
-    err = cudaMemcpyToSymbol(CUDA_sig, &psig, sizeof(psig));
+    auto psig = CudaMalloc<double>(ndata + 1);
+    CudaMemcpy(psig, sig.data(), ndata + 1);
+    CudaMemcpyToSymbol(CUDA_sig, &psig);
 
-    if (err) printf("Error: %s\n", cudaGetErrorString(err));
+    //if (err) printf("Error: %s\n", cudaGetErrorString(err));
 
     /* number of fitted parameters */
     int lmfit = 0, llastma = 0, llastone = 1, ma = n_coef + 5 + n_ph_par;
@@ -474,7 +552,7 @@ int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_ste
     cudaMemcpyToSymbol(CUDA_Dg_block, &m, sizeof(m));
 
     double* pa, * pg, * pal, * pco, * pdytemp, * pytemp;
-    double* de, *de0, *e_1, *e_2, *e_3, *e0_1, *e0_2, *e0_3, *jp_Scale, *jp_dphp_1, *jp_dphp_2, *jp_dphp_3;
+    //double* de, * de0, * e_1, * e_2, * e_3, * e0_1, * e0_2, * e0_3, * jp_Scale, * jp_dphp_1, * jp_dphp_2, * jp_dphp_3;
 
     err = cudaMalloc(&pa, CUDA_Grid_dim_precalc * (Numfac + 1) * sizeof(double));
     err = cudaMemcpyToSymbol(CUDA_Area, &pa, sizeof(pa));
@@ -485,18 +563,18 @@ int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_ste
     err = cudaMalloc(&pdytemp, CUDA_Grid_dim_precalc * (gl.maxLcPoints + 1) * (ma + 1) * sizeof(double));
     err = cudaMalloc(&pytemp, CUDA_Grid_dim_precalc * (gl.maxLcPoints + 1) * sizeof(double));
 
-    err = cudaMalloc(&de, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * gl.maxLcPoints * 4 * 4 * sizeof(double));
-    err = cudaMalloc(&de0, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * gl.maxLcPoints * 4 * 4 * sizeof(double));
-    err = cudaMalloc(&e_1, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&e_2, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&e_3, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&e0_1, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&e0_2, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&e0_3, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&jp_Scale, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&jp_dphp_1, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&jp_dphp_2, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&jp_dphp_3, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&de, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * gl.maxLcPoints * 4 * 4 * sizeof(double));
+    //err = cudaMalloc(&de0, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * gl.maxLcPoints * 4 * 4 * sizeof(double));
+    //err = cudaMalloc(&e_1, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&e_2, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&e_3, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&e0_1, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&e0_2, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&e0_3, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&jp_Scale, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&jp_dphp_1, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&jp_dphp_2, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&jp_dphp_3, static_cast<uint64_t>(CUDA_Grid_dim_precalc) * (gl.maxLcPoints) + 1 * sizeof(double));
 
     for (m = 0; m < CUDA_Grid_dim_precalc; m++)
     {
@@ -507,18 +585,18 @@ int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_ste
         ps.covar = &pco[m * (lmfit + 1) * (lmfit + 1)];
         ps.dytemp = &pdytemp[m * (gl.maxLcPoints + 1) * (ma + 1)];
         ps.ytemp = &pytemp[m * (gl.maxLcPoints + 1)];
-        ps.de = &de[m * gl.maxLcPoints * 4 * 4];
-        ps.de0 = &de0[m * gl.maxLcPoints * 4 * 4];
-        ps.e_1 = &e_1[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &e_2[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &e_3[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &e0_1[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &e0_2[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &e0_3[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &jp_Scale[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &jp_dphp_1[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &jp_dphp_2[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &jp_dphp_3[m * (gl.maxLcPoints + 1)];
+        //ps.de = &de[m * gl.maxLcPoints * 4 * 4];
+        //ps.de0 = &de0[m * gl.maxLcPoints * 4 * 4];
+        //ps.e_1 = &e_1[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &e_2[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &e_3[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &e0_1[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &e0_2[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &e0_3[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &jp_Scale[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &jp_dphp_1[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &jp_dphp_2[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &jp_dphp_3[m * (gl.maxLcPoints + 1)];
 
         freq_context* pt = &static_cast<freq_context*>(pcc)[m];
         err = cudaMemcpy(pt, &ps, sizeof(void*) * 6, cudaMemcpyHostToDevice);
@@ -528,7 +606,7 @@ int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_ste
 
     for (n = 1; n <= max_test_periods; n += CUDA_Grid_dim_precalc)
     {
-        CudaCalculatePrepare << <CUDA_Grid_dim_precalc, 1 >> > (n, max_test_periods, freq_start, freq_step);
+        CudaCalculatePrepare << <CUDA_Grid_dim_precalc, 1 >> > (n, max_test_periods, freq_start, freq_step); // freq_step should be 3.8101629944551254e-06
         //err = cudaThreadSynchronize();
         err = cudaDeviceSynchronize();
 
@@ -548,14 +626,14 @@ int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_ste
             while (!theEnd)
             {
                 count++;
-                CudaCalculateIter1Begin << <CUDA_Grid_dim_precalc, 1 >> > ();
+                CudaCalculateIter1Begin<<<CUDA_Grid_dim_precalc, 1>>>();
                 //mrqcof
-                CudaCalculateIter1Mrqcof1Start << <CUDA_Grid_dim_precalc, CUDA_BLOCK_DIM >> > ();
+                CudaCalculateIter1Mrqcof1Start<<<CUDA_Grid_dim_precalc, CUDA_BLOCK_DIM>>>();
                 for (iC = 1; iC < gl.Lcurves; iC++)
                 {
-                    CudaCalculateIter1Mrqcof1Matrix << <CUDA_Grid_dim_precalc, CUDA_BLOCK_DIM >> > (gl.Lpoints[iC]);
-                    CudaCalculateIter1Mrqcof1Curve1 << <CUDA_Grid_dim_precalc, CUDA_BLOCK_DIM >> > (gl.Inrel[iC], gl.Lpoints[iC]);
-                    CudaCalculateIter1Mrqcof1Curve2 << <CUDA_Grid_dim_precalc, CUDA_BLOCK_DIM >> > (gl.Inrel[iC], gl.Lpoints[iC]);
+                    CudaCalculateIter1Mrqcof1Matrix<<<CUDA_Grid_dim_precalc, CUDA_BLOCK_DIM>>>(gl.Lpoints[iC]);
+                    CudaCalculateIter1Mrqcof1Curve1<<<CUDA_Grid_dim_precalc, CUDA_BLOCK_DIM>>>(gl.Inrel[iC], gl.Lpoints[iC]);
+                    CudaCalculateIter1Mrqcof1Curve2<<<CUDA_Grid_dim_precalc, CUDA_BLOCK_DIM>>>(gl.Inrel[iC], gl.Lpoints[iC]);
                 }
                 CudaCalculateIter1Mrqcof1Curve1Last << <CUDA_Grid_dim_precalc, CUDA_BLOCK_DIM >> > (gl.Inrel[gl.Lcurves], gl.Lpoints[gl.Lcurves]);
                 CudaCalculateIter1Mrqcof1Curve2 << <CUDA_Grid_dim_precalc, CUDA_BLOCK_DIM >> > (gl.Inrel[gl.Lcurves], gl.Lpoints[gl.Lcurves]);
@@ -633,14 +711,19 @@ int CUDAPrecalc(int cudadev, double freq_start, double freq_end, double freq_ste
 }
 
 
+//int CUDAStart(int cudadev, int n_start_from, double freq_start, double freq_end, double freq_step, double stop_condition, int n_iter_min, double conw_r,
+//    int ndata, int* ia, int* ia_par, std::unique_ptr<double[]>& cg_first, MFILE& mf, double escl, double* sig, int Numfac, double* brightness, struct globals& gl)
+//int CUDAStart(int cudadev, int n_start_from, double freq_start, double freq_end, double freq_step, double stop_condition, int n_iter_min, double conw_r,
+//    int ndata, int* ia, int* ia_par, double* cg_first, MFILE& mf, double escl, double* sig, int Numfac, double* brightness, struct globals& gl)
 int CUDAStart(int cudadev, int n_start_from, double freq_start, double freq_end, double freq_step, double stop_condition, int n_iter_min, double conw_r,
-    int ndata, int* ia, int* ia_par, std::unique_ptr<double[]>& cg_first, MFILE& mf, double escl, double* sig, int Numfac, double* brightness, struct globals& gl)
+    int ndata, std::vector<int>& ia, int* ia_par, std::vector<double>& cg_first, MFILE& mf, double escl, std::vector<double>& sig, int Numfac,
+    std::vector<double>& brightness, struct globals& gl)
 {
     int retval, i, n, m, iC, n_max = (int)((freq_start - freq_end) / freq_step) + 1;
     int n_iter_max, theEnd, LinesWritten;
     double iter_diff_max;
     freq_result* res;
-    void* pcc, * pfr, * pbrightness, * psig;
+    void* pcc, * pfr; // , * pbrightness, * psig;
     char buf[256];
 
     for (i = 1; i <= n_ph_par; i++)
@@ -673,11 +756,12 @@ int CUDAStart(int cudadev, int n_start_from, double freq_start, double freq_end,
     cudaMemcpyToSymbol(CUDA_Numfac, &Numfac, sizeof(Numfac));
     m = Numfac + 1;
     cudaMemcpyToSymbol(CUDA_Numfac1, &m, sizeof(m));
-    cudaMemcpyToSymbol(CUDA_ia, ia, sizeof(int) * (MAX_N_PAR + 1));
-    //cudaMemcpyToSymbol(CUDA_cg_first, cg_first, sizeof(double) * (MAX_N_PAR + 1));
-    auto p_cg_first = cuda_malloc_double(MAX_N_PAR + 1);
-    copy_vector_to_device(p_cg_first, cg_first, ndata + 1);
-    cudaMemcpyToSymbol(CUDA_cg_first, &p_cg_first, sizeof(p_cg_first));
+    cudaMemcpyToSymbol(CUDA_ia, ia.data(), sizeof(int) * (MAX_N_PAR + 1));
+
+    cudaMemcpyToSymbol(CUDA_cg_first, cg_first.data(), sizeof(double) * (MAX_N_PAR + 1));
+    //auto p_cg_first = cuda_malloc_double(MAX_N_PAR + 1);
+    //copy_vector_to_device(p_cg_first, cg_first, ndata + 1);
+    //cudaMemcpyToSymbol(CUDA_cg_first, &p_cg_first, sizeof(p_cg_first));
 
     cudaMemcpyToSymbol(CUDA_n_iter_max, &n_iter_max, sizeof(n_iter_max));
     cudaMemcpyToSymbol(CUDA_n_iter_min, &n_iter_min, sizeof(n_iter_min));
@@ -697,12 +781,12 @@ int CUDAStart(int cudadev, int n_start_from, double freq_start, double freq_end,
       cudaMemcpyToSymbol(sh_big, sh_big_local, sizeof(double) * CUDA_BLOCK_DIM);*/
 
 
-    err = cudaMalloc(&pbrightness, (ndata + 1) * sizeof(double));
-    err = cudaMemcpy(pbrightness, brightness, (ndata + 1) * sizeof(double), cudaMemcpyHostToDevice);
+    auto pbrightness = CudaMalloc<double>(ndata + 1);
+    err = cudaMemcpy(pbrightness, brightness.data(), (ndata + 1) * sizeof(double), cudaMemcpyHostToDevice);
     err = cudaMemcpyToSymbol(CUDA_brightness, &pbrightness, sizeof(pbrightness));
 
-    err = cudaMalloc(&psig, (ndata + 1) * sizeof(double));
-    err = cudaMemcpy(psig, sig, (ndata + 1) * sizeof(double), cudaMemcpyHostToDevice);
+    auto psig = CudaMalloc<double>(ndata + 1);
+    err = cudaMemcpy(psig, sig.data(), (ndata + 1) * sizeof(double), cudaMemcpyHostToDevice);
     err = cudaMemcpyToSymbol(CUDA_sig, &psig, sizeof(psig));
 
     if (err) printf("Error: %s", cudaGetErrorString(err));
@@ -755,18 +839,18 @@ int CUDAStart(int cudadev, int n_start_from, double freq_start, double freq_end,
     err = cudaMalloc(&pdytemp, CUDA_grid_dim * (gl.maxLcPoints + 1) * (ma + 1) * sizeof(double));
     err = cudaMalloc(&pytemp, CUDA_grid_dim * (gl.maxLcPoints + 1) * sizeof(double));
 
-    err = cudaMalloc(&de, static_cast<uint64_t>(CUDA_grid_dim) * gl.maxLcPoints * 4 * 4 * sizeof(double));
-    err = cudaMalloc(&de0, static_cast<uint64_t>(CUDA_grid_dim) * gl.maxLcPoints * 4 * 4 * sizeof(double));
-    err = cudaMalloc(&e_1, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&e_2, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&e_3, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&e0_1, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&e0_2, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&e0_3, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&jp_Scale, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&jp_dphp_1, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&jp_dphp_2, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
-    err = cudaMalloc(&jp_dphp_3, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&de, static_cast<uint64_t>(CUDA_grid_dim) * gl.maxLcPoints * 4 * 4 * sizeof(double));
+    //err = cudaMalloc(&de0, static_cast<uint64_t>(CUDA_grid_dim) * gl.maxLcPoints * 4 * 4 * sizeof(double));
+    //err = cudaMalloc(&e_1, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&e_2, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&e_3, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&e0_1, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&e0_2, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&e0_3, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&jp_Scale, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&jp_dphp_1, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&jp_dphp_2, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
+    //err = cudaMalloc(&jp_dphp_3, static_cast<uint64_t>(CUDA_grid_dim) * (gl.maxLcPoints) + 1 * sizeof(double));
 
     for (m = 0; m < CUDA_grid_dim; m++)
     {
@@ -777,18 +861,18 @@ int CUDAStart(int cudadev, int n_start_from, double freq_start, double freq_end,
         ps.covar = &pco[m * (lmfit + 1) * (lmfit + 1)];
         ps.dytemp = &pdytemp[m * (gl.maxLcPoints + 1) * (ma + 1)];
         ps.ytemp = &pytemp[m * (gl.maxLcPoints + 1)];   //max_l_points
-        ps.de = &de[m * gl.maxLcPoints * 4 * 4];
-        ps.de0 = &de0[m * gl.maxLcPoints * 4 * 4];
-        ps.e_1 = &e_1[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &e_2[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &e_3[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &e0_1[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &e0_2[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &e0_3[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &jp_Scale[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &jp_dphp_1[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &jp_dphp_2[m * (gl.maxLcPoints + 1)];
-        ps.e_1 = &jp_dphp_3[m * (gl.maxLcPoints + 1)];
+        //ps.de = &de[m * gl.maxLcPoints * 4 * 4];
+        //ps.de0 = &de0[m * gl.maxLcPoints * 4 * 4];
+        //ps.e_1 = &e_1[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &e_2[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &e_3[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &e0_1[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &e0_2[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &e0_3[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &jp_Scale[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &jp_dphp_1[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &jp_dphp_2[m * (gl.maxLcPoints + 1)];
+        //ps.e_1 = &jp_dphp_3[m * (gl.maxLcPoints + 1)];
 
         freq_context* pt = &((freq_context*)pcc)[m];
         err = cudaMemcpy(pt, &ps, sizeof(void*) * 6, cudaMemcpyHostToDevice);

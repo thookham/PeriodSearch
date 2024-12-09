@@ -8,18 +8,22 @@
 #include "globals.h"
 #include "declarations.h"
 
-void areanorm(double t[], double f[], int ndir, int nfac, int **ifp, double at[], double af[])
+//void areanorm(double t[], double f[], int ndir, int nfac, int **ifp, double at[], double af[])
+void areanorm(std::vector<double>& t, std::vector<double>& f, int ndir, int nfac, std::vector<std::vector<int>>& ifp, std::vector<double>& at, std::vector<double>& af)
 {
    int i, j;
 
    double  st, clen2, clen;
 
-   double c[4], vx[4], vy[4], vz[4],
-          *x, *y, *z;
+   double c[4], vx[4], vy[4], vz[4];
+          // *x, *y, *z;
 
-   x = new_vector_double(ndir);
-   y = new_vector_double(ndir);
-   z = new_vector_double(ndir);
+   //x = new_vector_double(ndir);
+   //y = new_vector_double(ndir);
+   //z = new_vector_double(ndir);
+   std::vector<double> x(ndir + 1, 0.0);
+   std::vector<double> y(ndir + 1, 0.0);
+   std::vector<double> z(ndir + 1, 0.0);
 
    for (i = 1; i <= ndir; i++)
    {
@@ -58,7 +62,7 @@ void areanorm(double t[], double f[], int ndir, int nfac, int **ifp, double at[]
    //deallocate_vector((void *) x);
    //deallocate_vector((void *) y);
    //deallocate_vector((void *) z);
-   new_deallocate_vector(x);
-   new_deallocate_vector(y);
-   new_deallocate_vector(z);
+   //new_deallocate_vector(x);
+   //new_deallocate_vector(y);
+   //new_deallocate_vector(z);
 }

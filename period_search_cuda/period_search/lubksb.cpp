@@ -1,30 +1,32 @@
 /* Numerical Recipes */
 
-#include <memory>
-#include <vector>
+//#include "stdafx.h"
+//#include <memory>
+//#include <vector>
+#include "arrayHelpers.hpp"
 
-#include "stdafx.h"
 
-//void lubksb(double **a, int n, int indx[], double b[])
-void lubksb(std::vector<std::unique_ptr<double[]>>& a, int n, int* indx, std::unique_ptr<double[]>& b)
+//void lubksb(double **ef.fitmat, int ncoef, int indx[], double ef.fitvec[])  // ef.fitmat = ef.fitmat, indx = ef.indx, ef.fitvec = ef.fitvec
+//void lubksb(std::vector<std::unique_ptr<double[]>>& ef.fitmat, int ncoef, int* indx, std::unique_ptr<double[]>& ef.fitvec)
+void lubksb(struct ellfits& ef, int ncoef)
 {
    int i, ii=0, ip, j;
    double sum;
 
-   for (i = 1; i <= n; i++)
+   for (i = 1; i <= ncoef; i++)
    {
-      ip = indx[i];
-      sum = b[ip];
-      b[ip] = b[i];
+      ip = ef.indx[i];
+      sum = ef.fitvec[ip];
+      ef.fitvec[ip] = ef.fitvec[i];
       if (ii)
-         for (j = ii; j <= i-1; j++) sum -= a[i][j] * b[j];
+         for (j = ii; j <= i-1; j++) sum -= ef.fitmat[i][j] * ef.fitvec[j];
       else if (sum) ii = i;
-      b[i] = sum;
+      ef.fitvec[i] = sum;
    }
-   for (i = n; i >= 1; i--)
+   for (i = ncoef; i >= 1; i--)
    {
-      sum = b[i];
-      for (j = i + 1;j <= n; j ++) sum -= a[i][j] * b[j];
-      b[i] = sum / a[i][i];
+      sum = ef.fitvec[i];
+      for (j = i + 1;j <= ncoef; j ++) sum -= ef.fitmat[i][j] * ef.fitvec[j];
+      ef.fitvec[i] = sum / ef.fitmat[i][i];
    }
 }
