@@ -73,7 +73,7 @@
     <ClCompile Include="period_search\binaries.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="period_search\Start_OpenCl_c++.cpp">
+    <ClCompile Include="period_search\HelperFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -82,6 +82,9 @@
     <None Include="period_search\GlobalsCL.h">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="period_search\Makefile" />
+    <None Include="period_search_out_cuda_correct" />
+    <None Include="oclProgramFileToString.py" />
     <None Include="period_search\blmatrix.cl">
       <Filter>Source Files CL</Filter>
     </None>
@@ -121,12 +124,7 @@
     <None Include="period_search\swap.cl">
       <Filter>Source Files CL</Filter>
     </None>
-    <None Include="period_search\Makefile" />
-    <None Include="period_search\test.cl">
-      <Filter>Source Files CL</Filter>
-    </None>
-    <None Include="period_search_out_cuda_correct" />
-    <None Include="oclProgramFileToString.py" />
+    <None Include=".editorconfig" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="period_search\constants.h">
@@ -154,6 +152,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="period_search\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="period_search\opencl_helper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="period_search\ini.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

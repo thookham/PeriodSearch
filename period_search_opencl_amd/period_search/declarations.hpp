@@ -1,8 +1,9 @@
-//#pragma once
-// #include <CL/cl.h>
+#pragma once
+ #include <CL/cl.h>
 // #include <CL/cl_platform.h>
 
 #include <stdbool.h>
+#include <string>
 #if defined _WIN32
 #include "Windows.h"
 #endif
@@ -49,6 +50,12 @@ void deallocate_matrix_int(int **p_x, int rows);
 //void deallocate_matrix_3(void ***p_x, int n_1, int n_2);
 
 double host_dot_product(double a[], double b[]);
+std::string transformKernelCode(const std::string &kernel_code);
+int GetProgramBuildInfo(const cl_program program,
+                        const cl_device_id device,
+                        const char *name,
+                        const char deviceName[],
+                        const cl_int err_num);
 
 struct DATA {
 	int nlines;

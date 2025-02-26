@@ -3,14 +3,16 @@
 
  //  8.11.2006
 
-
 //#include <stdio.h>
 //#include <stdlib.h>
-//#include "globals_CUDA.h"
-//#include "declarations_CUDA.h"
+//#include "cl.hpp"
+//#include "opencl.h"
+//#include "GlobalsCl.h"
+//#include "declarations_OpenCl.h"
+//#include "Globals_OpenCl.h"
 
 
-/* comment the following line if no YORP */
+ /* comment the following line if no YORP */
 /*#define YORP*/
 
 void mrqcof_start(
@@ -102,10 +104,11 @@ void mrqcof_matrix(
 	__global struct mfreq_context* CUDA_LCC,
 	__global struct freq_context* CUDA_CC,
 	__global double* cg,
+    __global double* bufTim,
 	int Lpoints,
 	int num)
 {
-	matrix_neo(CUDA_LCC, CUDA_CC, cg, (*CUDA_LCC).np, Lpoints, num);
+    matrix_neo(CUDA_LCC, CUDA_CC, cg, bufTim, (*CUDA_LCC).np, Lpoints, num);
 }
 
 void mrqcof_curve1(

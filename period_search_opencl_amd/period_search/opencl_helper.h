@@ -1,10 +1,12 @@
+#pragma once
+// ReSharper disable CppClangTidyPerformanceAvoidEndl
 /* helper.h - OpenCL helper macros
  * Copyright 2010 (c) Adrian Sai-wah Tam <adrian.sw.tam@gmail.com>
  * Released under GNU LGPL.
  */
 
-#ifndef __OPENCL_HELPER_MACROS__
-#define __OPENCL_HELPER_MACROS__
+#ifndef OPENCL_HELPER_MACROS
+#define OPENCL_HELPER_MACROS
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +25,7 @@
     }
 
 /* The following macro assumes the assignment will store the error code to err */
-int err;  // error code returned from api calls
+inline int err;  // error code returned from api calls
 #define CL_ASSIGN(ASSIGNMENT) \
     { \
         ASSIGNMENT; \
@@ -35,7 +37,7 @@ int err;  // error code returned from api calls
     }
 
 
-const char *cl_error_to_str(cl_int e)
+inline const char *cl_error_to_str(cl_int e)
 {
     switch (e) {
         case CL_SUCCESS: return "success";
@@ -101,18 +103,18 @@ const char *cl_error_to_str(cl_int e)
 
 #endif
 
-bool getError(cl_int err)
+inline bool getError(const cl_int err_no)
 {
-    if(err != CL_SUCCESS)
+    if(err_no != CL_SUCCESS)
     {
-        std::cerr << "Error enqueueing kernel: " << cl_error_to_str(err) << " (" << err << ")" << std::endl;
+        std::cerr << "Error enqueueing kernel: " << cl_error_to_str(err_no) << " (" << err_no << ")" << std::endl;
         return true;
     }
 
     return false;
 }
 
-cl_int EnqueueNDRangeKernel(cl_command_queue command_queue,
+inline cl_int EnqueueNDRangeKernel(cl_command_queue command_queue,
                             cl_kernel kernel,
                             cl_uint work_dim,
                             const size_t* global_work_offset,
@@ -131,8 +133,8 @@ cl_int EnqueueNDRangeKernel(cl_command_queue command_queue,
     std::cerr << "Starting kernel [" << kernelName << "]... ";
 #endif
 
-    cl_int err = clEnqueueNDRangeKernel(command_queue, kernel, work_dim, global_work_offset, global_work_size, local_work_size, num_events_in_wait_list, event_wait_list, event);
-    if (err != CL_SUCCESS)
+    cl_int err_no = clEnqueueNDRangeKernel(command_queue, kernel, work_dim, global_work_offset, global_work_size, local_work_size, num_events_in_wait_list, event_wait_list, event);
+    if (err_no != CL_SUCCESS)
     {
 #if !defined DEBUG_LEVEL_5
         size_t nameSize;
@@ -140,7 +142,7 @@ cl_int EnqueueNDRangeKernel(cl_command_queue command_queue,
         auto kernelName = new char[nameSize];
         clGetKernelInfo(kernel, CL_KERNEL_FUNCTION_NAME, nameSize, kernelName, NULL);
 #endif
-        std::cerr << std::endl << "Error enqueueing kernel ["<< kernelName << "]: " << cl_error_to_str(err) << " (" << err << ")" << std::endl;
+        std::cerr << std::endl << "Error enqueueing kernel ["<< kernelName << "]: " << cl_error_to_str(err_no) << " (" << err_no << ")" << std::endl;
         return true;
     }
 

@@ -63,7 +63,7 @@ extern std::string kernelCurv, kernelDaveFile, kernelSig2wghtFile;
 //extern cl::Buffer bufDave, bufDyda;
 //extern cl::Buffer bufD;
 
-extern const char *ocl_src_kernelSource;
+//extern const char *ocl_src_kernelSource;
 
 
 // NOTE: global to one thread

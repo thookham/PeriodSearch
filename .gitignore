@@ -144,6 +144,9 @@ diag/
 
 */log
 
+# ReSharper files
+.editorconfig
+
 # Include the .github directory and its contents
 !/.github/
 !/.github/**

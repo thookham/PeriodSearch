@@ -8,6 +8,7 @@ void matrix_neo(
 	__global struct mfreq_context* CUDA_LCC,
 	__global struct freq_context* CUDA_CC,
 	__global double* cg,
+    __global double* bufTim,
 	int lnp1,
 	int Lpoints,
 	int num)
@@ -52,7 +53,8 @@ void matrix_neo(
 		ee0_2 = (*CUDA_CC).ee0[lnp][1];
 		ee_3 = (*CUDA_CC).ee[lnp][2];
 		ee0_3 = (*CUDA_CC).ee0[lnp][2];
-		t = (*CUDA_CC).tim[lnp];
+		//t = (*CUDA_CC).tim[lnp];
+        t = bufTim[lnp];
 
 		//if (blockIdx.x == 0)
 		//	printf("jp[%3d] lnp[%3d], %10.7f, %10.7f, %10.7f, %10.7f, %10.7f, %10.7f\n",

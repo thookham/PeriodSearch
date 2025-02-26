@@ -121,6 +121,9 @@
 #include "filesys.h"
 #include "boinc_api.h"
 #include "mfile.h"
+#include "arrayHelpers.hpp"
+#include "ini.h"
+#include "LcHelpers.hpp"
 //#include "graphics2.h"
 
 #ifdef APP_GRAPHICS
@@ -214,22 +217,24 @@ char *compareFilename;
 
 int main(int argc, char** argv)
 {
+    //SetEnvironmentVariable("NEO_CACHE_PERSISTENT", "0");
+
 	int retval, nlines, checkpointExists, nStartFrom;  //int c, nchars = 0 // double fsize, fd;
 	char inputPath[512], outputPath[512], chkptPath[512], buf[256];
 	MFILE out;
 	FILE* state, * infile;
 
 	int i, j, l, m, k, n, nrows, onlyrel, k2, ndir, iTemp, nIterMin, //, ndata
-		* ia, ial0, ial0_abs, ia_beta_pole, ia_lambda_pole, ia_prd, ia_par[4], ia_cl,
+		* ia, ial0, ial0_abs, ia_prd, ia_par[4], ia_cl,
 		lcNumber, ** ifp, newConw;
 
 	double startPeriod, periodStepCoef, endPeriod,
-		startFrequency, frequencyStep, endFrequency, jdMin, jdMax, stopCondition,
+		startFrequency, frequencyStep, endFrequency, stopCondition,
 		* t, * f, * at, * af;
 
 	double jd0, jd00, conw, conwR, a0 = 1.05, b0 = 1.00, c0 = 0.95, a, b, cAxis,
 		al0, al0Abs, ave, e0Len, elen, cosAlpha, dth, dph, rfit, escl, //cl
-		* brightness, e[4], e0[4], // ee[MAX_N_OBS + 1][3], ee0[MAX_N_OBS + 1][3],
+		 e[4], e0[4], // ee[MAX_N_OBS + 1][3], ee0[MAX_N_OBS + 1][3], * brightness,
 		* cg, * cgFirst, * sig, * al, //, * tim
 		* weightLc; // par[4]
 
@@ -237,53 +242,20 @@ int main(int argc, char** argv)
 	cl_int ndata;
 	cl_double cl;
 
-	cl_double lambdaPole[N_POLES + 1];
-	cl_double betaPole[N_POLES + 1];
-	cl_double par[4];
-	cl_double  ee[MAX_N_OBS + 1][3], ee0[MAX_N_OBS + 1][3];
-	cl_double* tim;
+	//cl_double lambdaPole[N_POLES + 1];
+	//cl_double betaPole[N_POLES + 1];
+    double lambdaPole[N_POLES + 1] = {0.0, 0.0, 90.0, 180.0, 270.0, 60.0, 180.0, 300.0, 60.0, 180.0, 300.0};
+    double betaPole[N_POLES + 1] = {0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 60.0, 60.0, -60.0, -60.0, -60.0};
 
-	char* stringTemp;
-	stringTemp = static_cast<char*>(malloc(MAX_LINE_LENGTH));
+    int ia_lambda_pole = 1;
+    int ia_beta_pole = 1;
 
-	//   ee = matrix_double(MAX_N_OBS,3);
-	//   ee0 = matrix_double(MAX_N_OBS,3);
-	//   covar = matrix_double(MAX_N_PAR,MAX_N_PAR);
-	//   aalpha = matrix_double(MAX_N_PAR,MAX_N_PAR);
-
-	ifp = matrix_int(MAX_N_FAC, 4);
-	brightness = vector_double(MAX_N_OBS);
-	sig = vector_double(MAX_N_OBS);
-	cg = vector_double(MAX_N_PAR);
-	cgFirst = vector_double(MAX_N_PAR);
-	t = vector_double(MAX_N_FAC);
-	f = vector_double(MAX_N_FAC);
-	at = vector_double(MAX_N_FAC);
-	af = vector_double(MAX_N_FAC);
-	ia = vector_int(MAX_N_PAR);
-
-	// tim = vector_cl_double(MAX_N_OBS);
-	tim = vector_double(MAX_N_OBS);
-
-	lambdaPole[1] = 0;    betaPole[1] = 0;
-	lambdaPole[2] = 90;   betaPole[2] = 0;
-	lambdaPole[3] = 180;  betaPole[3] = 0;
-	lambdaPole[4] = 270;  betaPole[4] = 0;
-	lambdaPole[5] = 60;   betaPole[5] = 60;
-	lambdaPole[6] = 180;  betaPole[6] = 60;
-	lambdaPole[7] = 300;  betaPole[7] = 60;
-	lambdaPole[8] = 60;   betaPole[8] = -60;
-	lambdaPole[9] = 180;  betaPole[9] = -60;
-	lambdaPole[10] = 300; betaPole[10] = -60;
-
-	ia_lambda_pole = ia_beta_pole = 1;
+    //mINI::INIFile iniFile("settings.ini");
 
 	BOINC_OPTIONS options;
 	boinc_options_defaults(options);
 	options.normal_thread_priority = true;
 	retval = boinc_init_options(&options);
-
-	//    retval = boinc_init();
 
 	if (retval) {
 		fprintf(stderr, "%s boinc_init returned %d\n",
@@ -294,16 +266,64 @@ int main(int argc, char** argv)
 
     boinc_get_init_data(aid);
 
-	//// -------------------
-	//char buffer[MAX_PATH];
-	//GetModuleFileName(NULL, buffer, MAX_PATH);
-	//string::size_type pos = string(buffer).find_last_of("\\/");
-	//auto result = string(buffer).substr(0, pos);
-	////--------------------------------------------
-
-	// open the input file (resolve logical name first)
-	//
+	// resolve logical name first
 	boinc_resolve_filename(input_filename, inputPath, sizeof(inputPath));
+
+    auto gl = globals();
+    auto res = PrepareLcData(gl, inputPath);
+    if (res <= 0)
+    {
+        fprintf(stderr, "\nCouldn't find input file, resolved name %s.\n", inputPath);
+        fflush(stderr);
+    }
+
+    /* Minimum JD*/
+    double jdMin;
+    /* Maximum JD*/
+    double jdMax;
+    /* Time in JD*/
+    std::vector<double> tim(gl.maxDataPoints + 2, 0.0);
+    /* Brightness*/
+    std::vector<double> brightness(gl.maxDataPoints + 4, 0.0);
+
+	cl_double par[4];
+	cl_double  ee[MAX_N_OBS + 1][3], ee0[MAX_N_OBS + 1][3];
+
+	char* stringTemp;
+	stringTemp = static_cast<char*>(malloc(MAX_LINE_LENGTH));
+
+	//   ee = matrix_double(MAX_N_OBS,3);
+	//   ee0 = matrix_double(MAX_N_OBS,3);
+	//   covar = matrix_double(MAX_N_PAR,MAX_N_PAR);
+	//   aalpha = matrix_double(MAX_N_PAR,MAX_N_PAR);
+
+	ifp = matrix_int(MAX_N_FAC, 4);
+	//brightness = vector_double(MAX_N_OBS);
+	sig = vector_double(MAX_N_OBS);
+	cg = vector_double(MAX_N_PAR);
+	cgFirst = vector_double(MAX_N_PAR);
+	t = vector_double(MAX_N_FAC);
+	f = vector_double(MAX_N_FAC);
+	at = vector_double(MAX_N_FAC);
+	af = vector_double(MAX_N_FAC);
+	ia = vector_int(MAX_N_PAR);
+
+	// tim = vector_cl_double(MAX_N_OBS);
+	//cl_double* tim = vector_double(MAX_N_OBS);
+
+	//lambdaPole[1] = 0;    betaPole[1] = 0;
+	//lambdaPole[2] = 90;   betaPole[2] = 0;
+	//lambdaPole[3] = 180;  betaPole[3] = 0;
+	//lambdaPole[4] = 270;  betaPole[4] = 0;
+	//lambdaPole[5] = 60;   betaPole[5] = 60;
+	//lambdaPole[6] = 180;  betaPole[6] = 60;
+	//lambdaPole[7] = 300;  betaPole[7] = 60;
+	//lambdaPole[8] = 60;   betaPole[8] = -60;
+	//lambdaPole[9] = 180;  betaPole[9] = -60;
+	//lambdaPole[10] = 300; betaPole[10] = -60;
+	//ia_lambda_pole = ia_beta_pole = 1;
+
+	// open the input file
 	infile = boinc_fopen(inputPath, "r");
 	if (!infile) {
 		fprintf(stderr,
@@ -893,8 +913,8 @@ int main(int argc, char** argv)
 	//  deallocate_matrix_double(aalpha,MAX_N_PAR);
 	deallocate_matrix_int(ifp, MAX_N_FAC);
 
-	deallocate_vector(tim);
-	deallocate_vector(brightness);
+	//deallocate_vector(tim);
+	//deallocate_vector(brightness);
 	deallocate_vector(sig);
 	deallocate_vector(cg);
 	deallocate_vector(cgFirst);

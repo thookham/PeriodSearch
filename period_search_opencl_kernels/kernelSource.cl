@@ -2827,4 +2827,4 @@ __kernel void ClCalculateFinishPole(
     barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE);
 }
 
-// Created on: 2025-02-26 16:44:46
+// Created on: 2025-02-26 17:21:59
