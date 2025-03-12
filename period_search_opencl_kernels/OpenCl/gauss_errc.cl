@@ -4,7 +4,8 @@
 //int gauss_errc(struct mfreq_context* CUDA_LCC, struct freq_context* CUDA_CC, int* sh_icol, int* sh_irow, double* sh_big, int icol, double pivinv)
 int gauss_errc(
 	__global struct mfreq_context* CUDA_LCC,
-	__global struct freq_context* CUDA_CC)
+	__global struct freq_context* CUDA_CC,
+	__global int* ia)
 {
 	//__shared__ int icol;
 	//__shared__ double pivinv;
@@ -159,7 +160,7 @@ int gauss_errc(
 				j = 0;
 				for (int l = 1; l <= (*CUDA_CC).ma; l++)
 				{
-					if ((*CUDA_CC).ia[l])
+					if (ia[l])
 					{
 						j++;
 						(*CUDA_LCC).atry[l] = (*CUDA_LCC).cg[l] + (*CUDA_LCC).da[j];

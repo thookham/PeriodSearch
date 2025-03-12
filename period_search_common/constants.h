@@ -24,3 +24,9 @@
 #define RAD2DEG     (180.0 / PI)
 
 #define DIV                1024             // Use to convert bytes to KB
+
+#if defined INTEL							// OpenCl
+#define BLOCK_DIM 64
+#else
+#define BLOCK_DIM 128
+#endif

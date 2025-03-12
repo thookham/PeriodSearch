@@ -5,7 +5,6 @@ VisualStudioVersion = 17.7.33913.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "psopencl_vs2022", "psopencl_vs2022.vcxproj", "{00343A69-885F-4836-8730-10B1D31B1F65}"
 	ProjectSection(ProjectDependencies) = postProject
-		{1138E9A2-DEA5-4551-89D3-47840B34ADAD} = {1138E9A2-DEA5-4551-89D3-47840B34ADAD}
 		{11512441-BBDA-4B9D-8A83-A7262E2FD24D} = {11512441-BBDA-4B9D-8A83-A7262E2FD24D}
 	EndProjectSection
 EndProject

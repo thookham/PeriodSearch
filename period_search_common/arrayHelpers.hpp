@@ -1,6 +1,6 @@
 #pragma once
 //#include <iostream>
-#ifndef GLOBALS_H 
+#ifndef GLOBALS_H
 #define GLOBALS_H
 
 #include <vector>

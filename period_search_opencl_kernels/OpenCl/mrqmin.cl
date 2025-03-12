@@ -6,7 +6,8 @@
 
 int mrqmin_1_end(
 	__global struct mfreq_context* CUDA_LCC,
-	__global struct freq_context* CUDA_CC)
+	__global struct freq_context* CUDA_CC,
+	__global int* ia)
 {
 	int j;
 	int3 threadIdx, blockIdx;
@@ -62,7 +63,7 @@ int mrqmin_1_end(
 	// >>> Iter1Mrqmin1EndPre2 END
 
 	// <<< gauss_errc    ---- GAUS ERROR CODE ----
-	int err_code = gauss_errc(CUDA_LCC, CUDA_CC);
+	int err_code = gauss_errc(CUDA_LCC, CUDA_CC, ia);
 	if (err_code)
 	{
 		return err_code;
@@ -76,7 +77,7 @@ int mrqmin_1_end(
 		//		if (err_code != 0) return(err_code);  "bacha na sync threads" - Watch out for Sync Threads
 		j = 0;
 		for (int l = 1; l <= ma; l++)
-			if ((*CUDA_CC).ia[l])
+			if (ia[l])
 			{
 				j++;
 				(*CUDA_LCC).atry[l] = (*CUDA_LCC).cg[l] + (*CUDA_LCC).da[j];

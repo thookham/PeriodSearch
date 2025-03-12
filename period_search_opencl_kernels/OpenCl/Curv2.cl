@@ -5,6 +5,11 @@ void mrqcof_curve2(
 	__global double* alpha,
 	__global double* beta,
 	__global double* brightness,
+	__global double* weight,
+	__global double* sig,
+	__global double* dytemp,
+	__global double* ytemp,
+	__global int* ia,
 	int inrel,
 	int lpoints)
 {
@@ -51,39 +56,25 @@ void mrqcof_curve2(
 			lnp1++;
 			int ixx = jp + 1 * Lpoints1;
 			/* Set the size scale coeff. deriv. explicitly zero for relative lcurves */
-			(*CUDA_LCC).dytemp[ixx] = 0;
+			//(*CUDA_LCC).dytemp[ixx] = 0;
+			dytemp[ixx] = 0;
 
-			//if (blockIdx.x == 0)
-			//	printf("[%d][%d] dytemp[%3d]: %10.7f\n", blockIdx.x, jp, ixx, (*CUDA_LCC).dytemp[ixx]);
+			coef = sig[lnp1] * lpoints / (*CUDA_LCC).ave;
 
-			coef = (*CUDA_CC).Sig[lnp1] * lpoints / (*CUDA_LCC).ave;
-
-			//if (threadIdx.x == 0)
-			//	printf("[%d][%3d][%d] coef: %10.7f\n", blockIdx.x, threadIdx.x, jp, coef);
-
-			double yytmp = (*CUDA_LCC).ytemp[jp];
+			//double yytmp = (*CUDA_LCC).ytemp[jp];
+			double yytmp = ytemp[jp];
 			coef1 = yytmp / (*CUDA_LCC).ave;
 
-			//if (blockIdx.x == 0 && threadIdx.x == 0)
-			//	printf("[Device | mrqcof_curve2_1] [%3d]  yytmp[%3d]: %10.7f, ave: %10.7f\n", threadIdx.x, jp, yytmp, (*CUDA_LCC).ave);
+			//(*CUDA_LCC).ytemp[jp] = coef * yytmp;
+			ytemp[jp] = coef * yytmp;
 
-			(*CUDA_LCC).ytemp[jp] = coef * yytmp;
-
-			//if (blockIdx.x == 0)
-			//	printf("[Device][%d][%3d] ytemp[%3d]: %10.7f\n", blockIdx.x, threadIdx.x, jp, (*CUDA_LCC).ytemp[jp]);
 
 			ixx += Lpoints1;
 
-			//if (threadIdx.x == 0)
-			//	printf("[%3d] jp[%3d] dytemp[%3d]: %10.7f\n", blockIdx.x, jp, ixx, (*CUDA_LCC).dytemp[ixx]);
-
 			for (l = 2; l <= (*CUDA_CC).ma; l++, ixx += Lpoints1)
 			{
-				(*CUDA_LCC).dytemp[ixx] = coef * ((*CUDA_LCC).dytemp[ixx] - coef1 * (*CUDA_LCC).dave[l]);
-
-				//if (blockIdx.x == 0 && threadIdx.x == 0)
-				//	printf("[Device | mrqcof_curve2_1] [%3d]  coef1: %10.7f, dave[%3d]: %10.7f, dytemp[%3d]: %10.7f\n",
-				//		threadIdx.x, coef1, l, (*CUDA_LCC).dave[l], ixx, (*CUDA_LCC).dytemp[ixx]);
+				//(*CUDA_LCC).dytemp[ixx] = coef * ((*CUDA_LCC).dytemp[ixx] - coef1 * (*CUDA_LCC).dave[l]);
+				dytemp[ixx] = coef * (dytemp[ixx] - coef1 * (*CUDA_LCC).dave[l]);
 			}
 		}
 	}
@@ -98,20 +89,25 @@ void mrqcof_curve2(
 	lnp2 = (*CUDA_LCC).np2;
 	ltrial_chisq = (*CUDA_LCC).trial_chisq;
 
-	if ((*CUDA_CC).ia[1]) //not relative
+	if (ia[1]) //not relative
 	{
 		for (jp = 1; jp <= lpoints; jp++)
 		{
-			ymod = (*CUDA_LCC).ytemp[jp];
+			//ymod = (*CUDA_LCC).ytemp[jp];
+			ymod = ytemp[jp];
 
 			int ixx = jp + matmpl * Lpoints1;
 			for (l = matmpl; l <= matmph; l++, ixx += Lpoints1)
-				(*CUDA_LCC).dyda[l] = (*CUDA_LCC).dytemp[ixx];
+			{
+				//(*CUDA_LCC).dyda[l] = (*CUDA_LCC).dytemp[ixx];
+				(*CUDA_LCC).dyda[l] = dytemp[ixx];
+			}
+
 			barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE); //__syncthreads();
 
 			lnp2++;
-			sig2i = 1 / ((*CUDA_CC).Sig[lnp2] * (*CUDA_CC).Sig[lnp2]);
-			wght = (*CUDA_CC).Weight[lnp2];
+			sig2i = 1 / (sig[lnp2] * sig[lnp2]);
+			wght = weight[lnp2];
 
 			//dy = (*CUDA_CC).Brightness[lnp2] - ymod;
 			dy = brightness[lnp2] - ymod;
@@ -146,7 +142,7 @@ void mrqcof_curve2(
 			} /* l */
 			for (; l <= (*CUDA_CC).lastma; l++)
 			{
-				if ((*CUDA_CC).ia[l])
+				if (ia[l])
 				{
 					j++;
 					wt = (*CUDA_LCC).dyda[l] * sig2iwght;
@@ -164,7 +160,7 @@ void mrqcof_curve2(
 						m = (*CUDA_CC).lastone + 1;
 						for (; m <= l; m++)
 						{
-							if ((*CUDA_CC).ia[m])
+							if (ia[m])
 							{
 								k++;
 								alpha[j * (*CUDA_CC).Mfit1 + k] = alpha[j * (*CUDA_CC).Mfit1 + k] + wt * (*CUDA_LCC).dyda[m];
@@ -186,7 +182,8 @@ void mrqcof_curve2(
 
 		for (jp = 1; jp <= lpoints; jp++)
 		{
-			ymod = (*CUDA_LCC).ytemp[jp];
+			//ymod = (*CUDA_LCC).ytemp[jp];
+			ymod = ytemp[jp];
 
 			//if (blockIdx.x == 0 && threadIdx.x == 0)
 			//	printf("Curve2_2b >>> [%3d][%3d] jp[%3d] ymod: %10.7f\n", blockIdx.x, threadIdx.x, jp, ymod);
@@ -194,17 +191,15 @@ void mrqcof_curve2(
 			int ixx = jp + matmpl * Lpoints1;
 			for (l = matmpl; l <= matmph; l++, ixx += Lpoints1)
 			{
-				(*CUDA_LCC).dyda[l] = (*CUDA_LCC).dytemp[ixx];  // jp[1] dytemp[315] 0.0 - ?!?  must be -1051420.6747227
-
-				//if (blockIdx.x == 0 && threadIdx.x == 1 && jp == 1)
-				//	printf("[%2d][%3d] dytemp[%d]: %10.7f\n", blockIdx.x, jp, ixx, (*CUDA_LCC).dytemp[ixx]);
+				//(*CUDA_LCC).dyda[l] = (*CUDA_LCC).dytemp[ixx];  // jp[1] dytemp[315] 0.0 - ?!?  must be -1051420.6747227
+				(*CUDA_LCC).dyda[l] = dytemp[ixx];
 			}
 			barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE); //__syncthreads();
 
 			lnp2++;
 
-			sig2i = 1 / ((*CUDA_CC).Sig[lnp2] * (*CUDA_CC).Sig[lnp2]);
-			wght = (*CUDA_CC).Weight[lnp2];
+			sig2i = 1 / (sig[lnp2] * sig[lnp2]);
+			wght = weight[lnp2];
 
 			//dy = (*CUDA_CC).Brightness[lnp2] - ymod;
 			dy = brightness[lnp2] - ymod;
@@ -263,7 +258,7 @@ void mrqcof_curve2(
 			for (; l <= (*CUDA_CC).lastma; l++)
 			{
 
-				if ((*CUDA_CC).ia[l])
+				if (ia[l])
 				{
 					j++;
 					wt = (*CUDA_LCC).dyda[l] * sig2iwght;
@@ -285,7 +280,7 @@ void mrqcof_curve2(
 						m = (*CUDA_CC).lastone + 1;
 						for (; m <= l; m++)
 						{
-							if ((*CUDA_CC).ia[m])
+							if (ia[m])
 							{
 								k++;
 								alpha[j * (*CUDA_CC).Mfit1 + k] = alpha[j * (*CUDA_CC).Mfit1 + k] + wt * (*CUDA_LCC).dyda[m];

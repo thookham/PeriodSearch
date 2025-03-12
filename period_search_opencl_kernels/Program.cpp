@@ -16,10 +16,29 @@ int main(int argc, char** argv)
     }
 
     std::time_t now = std::time(nullptr);
+
+    //std::string dtime = std::ctime(&now);
+    //std::hash<std::string> hasher;
+    //size_t hashValue = hasher(dtime);
+
+    //std::string kernelHashFile = "kernels_hash.cpp";
+    //std::ofstream hFile(kernelHashFile, std::ios::out | std::ios::binary);
+    //hFile << std::endl << "inline const int kernel_hash = " << hashValue << ";" << std::endl;
+    //hFile.close();
+
     char datetime[100];
     struct tm timeinfo;
     localtime_s(&timeinfo, &now);
     std::strftime(datetime, sizeof(datetime), "%Y-%m-%d %H:%M:%S", &timeinfo);
+
+    std::string dateTimeString(datetime);
+    std::hash<std::string> hasher;
+    size_t hashValue = hasher(dateTimeString);
+
+    std::string kernelHashFile = "kernels_hash.cpp";
+    std::ofstream hFile(kernelHashFile, std::ios::out | std::ios::binary);
+    hFile << std::endl << "inline const int kernel_hash = " << hashValue << ";" << std::endl;
+    hFile.close();
 
 	std::string kernelSourceFile = "kernelSource.cl";
 

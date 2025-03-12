@@ -1,7 +1,7 @@
- //slighly changed code from Numerical Recipes
- //  converted from Mikko's fortran code
+//slighly changed code from Numerical Recipes
+//  converted from Mikko's fortran code
 
- //  8.11.2006
+//  8.11.2006
 
 //#include <stdio.h>
 //#include <stdlib.h>
@@ -104,17 +104,46 @@ void mrqcof_matrix(
 	__global struct mfreq_context* CUDA_LCC,
 	__global struct freq_context* CUDA_CC,
 	__global double* cg,
-    __global double* bufTim,
+	__global double* bufTim,
+	__global double* bufEe,
+	__global double* bufEe0,
+	__global double* mJpScale,
+	__global double* mJpDphp1,
+	__global double* mJpDphp2,
+	__global double* mJpDphp3,
+	__global double* mE1,
+	__global double* mE2,
+	__global double* mE3,
+	__global double* mE01,
+	__global double* mE02,
+	__global double* mE03,
+	__global double* mDe,
+	__global double* mDe0,
 	int Lpoints,
 	int num)
 {
-    matrix_neo(CUDA_LCC, CUDA_CC, cg, bufTim, (*CUDA_LCC).np, Lpoints, num);
+	matrix_neo(CUDA_LCC, CUDA_CC, cg, bufTim, bufEe, bufEe0, mJpScale, mJpDphp1, mJpDphp2, mJpDphp3, mE1, mE2, mE3, mE01, mE02, mE03, mDe, mDe0,
+		(*CUDA_LCC).np, Lpoints, num);
 }
 
 void mrqcof_curve1(
 	__global struct mfreq_context* CUDA_LCC,
 	__global struct freq_context* CUDA_CC,
 	__global double* cg,
+	__global double* mJpScale,
+	__global double* mJpDphp1,
+	__global double* mJpDphp2,
+	__global double* mJpDphp3,
+	__global double* mE1,
+	__global double* mE2,
+	__global double* mE3,
+	__global double* mE01,
+	__global double* mE02,
+	__global double* mE03,
+	__global double* mDe,
+	__global double* mDe0,
+	__global double* dytemp,
+	__global double* ytemp,
 	__local double* tmave,
 	int Inrel,
 	int Lpoints,
@@ -122,8 +151,22 @@ void mrqcof_curve1(
 {
 	//__local double tmave[BLOCK_DIM];  // __shared__
 	__private int Lpoints1 = Lpoints + 1;
-	__private int k, lnp, jp;
+	__private int k, lnp; // , jp;
 	__private double lave;
+	int jp;
+
+	__global double* sDe;
+	__global double* sDe0;
+	double sJpScale;
+	double sJpDphp1;
+	double sJpDphp2;
+	double sJpDphp3;
+	double e1;
+	double e2;
+	double e3;
+	double e01;
+	double e02;
+	double e03;
 
 	lnp = (*CUDA_LCC).np;
 	lave = (*CUDA_LCC).ave;
@@ -143,8 +186,20 @@ void mrqcof_curve1(
 
 	for (jp = brtmpl; jp <= brtmph; jp++)
 	{
-			/*  ---  BRIGHT  ---  */
-		bright(CUDA_LCC, CUDA_CC, cg, jp, Lpoints1, Inrel);
+		sDe = &mDe[jp * 16];
+		sDe0 = &mDe0[jp * 16];
+		sJpScale = mJpScale[jp];
+		sJpDphp1 = mJpDphp1[jp];
+		sJpDphp2 = mJpDphp2[jp];
+		sJpDphp3 = mJpDphp3[jp];
+		e1 = mE1[jp];
+		e2 = mE2[jp];
+		e3 = mE3[jp];
+		e01 = mE01[jp];
+		e02 = mE02[jp];
+		e03 = mE03[jp];
+
+		bright(CUDA_LCC, CUDA_CC, cg, sJpScale, sJpDphp1, sJpDphp2, sJpDphp3, e1, e2, e3, e01, e02, e03, sDe, sDe0, dytemp, ytemp, jp, Lpoints1, Inrel);
 	}
 
 	barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE); //__syncthreads();
@@ -167,24 +222,23 @@ void mrqcof_curve1(
 		{
 			//jp==1
 			ixx++;
-			(*CUDA_LCC).dave[l] = (*CUDA_LCC).dytemp[ixx];
+			//(*CUDA_LCC).dave[l] = (*CUDA_LCC).dytemp[ixx];
+			(*CUDA_LCC).dave[l] = dytemp[ixx];                  // <<<<<<<<<<<<<<<<<<<   dytemp
 
 			//jp>=2
 			ixx++;
 			for (int jp = 2; jp <= Lpoints; jp++, ixx++)
 			{
 				//(*CUDA_LCC).dave[l] = (*CUDA_LCC).dave[l] + (*CUDA_LCC).dytemp[ixx];
-				(*CUDA_LCC).dave[l] = (*CUDA_LCC).dave[l] + (*CUDA_LCC).dytemp[ixx];
-
-				//if (threadIdx.x == 1)
-				//	printf("[Device | mrqcof_curv1] [%3d] dytemp[%3d]: %10.7f, dave[%3d]: %10.7f\n", blockIdx.x, ixx, (*CUDA_LCC).dytemp[ixx], l, (*CUDA_LCC).dave[l]);
+				(*CUDA_LCC).dave[l] = (*CUDA_LCC).dave[l] + dytemp[ixx];                // <<<<<<<<<<<<<<<<<<<   dytemp
 			}
 		}
 
 		tmave[threadIdx.x] = 0;
 		for (int jp = brtmpl; jp <= brtmph; jp++)
 		{
-			tmave[threadIdx.x] += (*CUDA_LCC).ytemp[jp];
+			//tmave[threadIdx.x] += (*CUDA_LCC).ytemp[jp];
+			tmave[threadIdx.x] += ytemp[jp];
 		}
 
 		barrier(CLK_GLOBAL_MEM_FENCE | CLK_LOCAL_MEM_FENCE); //__syncthreads();
@@ -218,6 +272,8 @@ void mrqcof_curve1_last(
 	__global double* a,
 	__global double* alpha,
 	__global double* beta,
+	__global double* dytemp,
+	__global double* ytemp,
 	__local double* res,
 	int Inrel,
 	int Lpoints)
@@ -270,7 +326,8 @@ void mrqcof_curve1_last(
 
 		if (threadIdx.x == 0)
 		{
-			(*CUDA_LCC).ytemp[jp] = ymod;
+			//(*CUDA_LCC).ytemp[jp] = ymod;
+			ytemp[jp] = ymod;
 
 			if (Inrel == 1)
 				lave = lave + ymod;
@@ -278,7 +335,7 @@ void mrqcof_curve1_last(
 		for (l = tmpl; l <= tmph; l++)
 		{
 			//(*CUDA_LCC).dytemp[jp + l * (Lpoints + 1)] = (*CUDA_LCC).dyda[l];
-			(*CUDA_LCC).dytemp[jp + l * (Lpoints + 1)] = (*CUDA_LCC).dyda[l];
+			dytemp[jp + l * (Lpoints + 1)] = (*CUDA_LCC).dyda[l];               // <<<<<<<<<<<<<<<<<<<<  dytemp
 
 			if (Inrel == 1)
 				(*CUDA_LCC).dave[l] = (*CUDA_LCC).dave[l] + (*CUDA_LCC).dyda[l];

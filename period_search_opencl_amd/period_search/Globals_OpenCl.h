@@ -28,19 +28,12 @@
 //struct __declspec(align(8)) mfreq_context {
 struct alignas(8) mfreq_context
 {
-	//double* Area;
-	//double* Dg;
-	//double* alpha;
-	//double* covar;
-	//double* dytemp;
-	//double* ytemp;
-
 	 double Area[MAX_N_FAC + 1];
 	 double Dg[(MAX_N_FAC + 1) * (MAX_N_PAR + 1)];
 	 double alpha[(MAX_N_PAR + 1) * (MAX_N_PAR + 1)];
 	 double covar[(MAX_N_PAR + 1) * (MAX_N_PAR + 1)];
-	 double dytemp[(POINTS_MAX + 1) * (MAX_N_PAR + 1)];
-	 double ytemp[POINTS_MAX + 1];
+	 //double dytemp[(POINTS_MAX + 1) * (MAX_N_PAR + 1)];
+	 //double ytemp[POINTS_MAX + 1];
 
 	double beta[MAX_N_PAR + 1];
 	double atry[MAX_N_PAR + 1];
@@ -48,18 +41,18 @@ struct alignas(8) mfreq_context
 	double cg[MAX_N_PAR + 1];
 	double Blmat[4][4];
 	double Dblm[3][4][4];
-	double jp_Scale[POINTS_MAX + 1];
-	double jp_dphp_1[POINTS_MAX + 1];
-	double jp_dphp_2[POINTS_MAX + 1];
-	double jp_dphp_3[POINTS_MAX + 1];
-	double e_1[POINTS_MAX + 1];
-	double e_2[POINTS_MAX + 1];
-	double e_3[POINTS_MAX + 1];
-	double e0_1[POINTS_MAX + 1];
-	double e0_2[POINTS_MAX + 1];
-	double e0_3[POINTS_MAX + 1];
-	double de[POINTS_MAX + 1][4][4];
-	double de0[POINTS_MAX + 1][4][4];
+	//double jp_Scale[POINTS_MAX + 1];
+	//double jp_dphp_1[POINTS_MAX + 1];
+	//double jp_dphp_2[POINTS_MAX + 1];
+	//double jp_dphp_3[POINTS_MAX + 1];
+	//double e_1[POINTS_MAX + 1];
+	//double e_2[POINTS_MAX + 1];
+	//double e_3[POINTS_MAX + 1];
+	//double e0_1[POINTS_MAX + 1];
+	//double e0_2[POINTS_MAX + 1];
+	//double e0_3[POINTS_MAX + 1];
+	//double de[POINTS_MAX + 1][4][4];
+	//double de0[POINTS_MAX + 1][4][4];
 	double dave[MAX_N_PAR + 1];
 	double dyda[MAX_N_PAR + 1];
 
@@ -106,12 +99,12 @@ struct alignas(8) freq_context
 	double Alamda_incr;
 
 	//double cgFirst[MAX_N_PAR + 1];
-	double tim[MAX_N_OBS + 1];
-	double ee[MAX_N_OBS + 1][3];	// double* ee;
-	double ee0[MAX_N_OBS + 1][3];	// double* ee0;
-	double Sig[MAX_N_OBS + 1];
-	double Weight[MAX_N_OBS + 1];
-	double Brightness[MAX_N_OBS + 1];
+	//double tim[MAX_N_OBS + 1];
+	//double ee[MAX_N_OBS + 1][3];	// double* ee;
+	//double ee0[MAX_N_OBS + 1][3];	// double* ee0;
+	//double Weight[MAX_N_OBS + 1];
+	//double Brightness[MAX_N_OBS + 1];
+	//double Sig[MAX_N_OBS + 1];
 	double Fc[MAX_N_FAC + 1][MAX_LM + 1];
 	double Fs[MAX_N_FAC + 1][MAX_LM + 1];
 	double Darea[MAX_N_FAC + 1];
@@ -120,7 +113,7 @@ struct alignas(8) freq_context
 	double Pleg[MAX_N_FAC + 1][MAX_LM + 1][MAX_LM + 1];
 	double conw_r;
 
-	cl_int ia[MAX_N_PAR + 1];
+	//cl_int ia[MAX_N_PAR + 1];
 
 	cl_int Dg_block;
 	cl_int lastone;
@@ -135,6 +128,7 @@ struct alignas(8) freq_context
 	cl_int Nphpar;
 	cl_int ndata;
 	cl_int Is_Precalc;
+    cl_int maxLcPoints;
 };
 
 //extern __declspec(align(4)) freq_context* CUDA_CC2;

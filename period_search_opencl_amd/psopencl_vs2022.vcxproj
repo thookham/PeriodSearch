@@ -354,6 +354,7 @@
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>xcopy "..\period_search_opencl_kernels\kernelSource.cl" "$(ProjectDir)" /Y
+xcopy "..\period_search_opencl_kernels\kernels_hash.cpp" "$(ProjectDir)" /Y
 call "$(ProjectDir)\stringify.bat"
 </Command>
     </PreBuildEvent>
@@ -540,30 +541,11 @@ call "$(ProjectDir)\stringify.bat"
   <ItemGroup>
     <None Include=".editorconfig" />
     <None Include="oclProgramFileToString.py" />
-    <None Include="period_search\blmatrix.cl" />
-    <None Include="period_search\bright.cl" />
-    <None Include="period_search\conv.cl" />
     <None Include="period_search\cpp.hint" />
-    <None Include="period_search\curv.cl" />
-    <None Include="period_search\Curv2.cl" />
-    <None Include="period_search\dave.cl" />
-    <None Include="period_search\gauss_errc.cl" />
-    <None Include="period_search\GlobalsCL.h">
-      <DeploymentContent>true</DeploymentContent>
-    </None>
-    <None Include="period_search\Intrinsics.cl" />
     <None Include="period_search\Makefile" />
-    <None Include="period_search\mrqcof.cl" />
-    <None Include="period_search\mrqmin.cl" />
-    <None Include="period_search\sig2iwght.cl" />
-    <None Include="period_search\Start.cl" />
-    <None Include="period_search\swap.cl" />
     <None Include="period_search_out_cuda_correct" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="period_search\constants.h">
-      <DeploymentContent>true</DeploymentContent>
-    </ClInclude>
     <ClInclude Include="period_search\declarations.hpp" />
     <ClInclude Include="period_search\declarations_OpenCl.h" />
     <ClInclude Include="period_search\globals.h" />

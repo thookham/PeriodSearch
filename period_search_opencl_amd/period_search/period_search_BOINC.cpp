@@ -186,12 +186,12 @@ void update_shmem() {
 
 // NOTE: global parameters
 cl_int l_max, m_max, n_iter, last_call,
-n_coef, num_fac, l_curves, n_ph_par,
-deallocate; // , max_l_points; // n_iter,
+n_coef, num_fac, n_ph_par,
+deallocate; // , max_l_points; // n_iter, l_curves,
 
 double o_chi_square, chi_square, a_lambda, scale, //phi_0
-d_area[MAX_N_FAC + 1], sclnw[MAX_LC + 1], /*Area[MAX_N_FAC+1],*/
-y_out[MAX_N_OBS + 1],
+d_area[MAX_N_FAC + 1], //sclnw[MAX_LC + 1], /*Area[MAX_N_FAC+1],*/
+//y_out[MAX_N_OBS + 1],
 f_c[MAX_N_FAC + 1][MAX_LM + 1], f_s[MAX_N_FAC + 1][MAX_LM + 1],
 t_c[MAX_N_FAC + 1][MAX_LM + 1], t_s[MAX_N_FAC + 1][MAX_LM + 1],
 d_sphere[MAX_N_FAC + 1][MAX_N_PAR + 1], d_g[MAX_N_FAC + 1][MAX_N_PAR + 1],
@@ -205,9 +205,9 @@ string kernelCurv, kernelDaveFile, kernelSig2wghtFile;
 cl_double a_lamda_incr;
 cl_double a_lamda_start;
 cl_double phi_0;
-cl_double weight[MAX_N_OBS + 1];
-cl_int max_l_points;
-cl_int l_points[MAX_LC + 1], in_rel[MAX_LC + 1];
+//cl_double weight[MAX_N_OBS + 1];
+//cl_int max_l_points;
+//cl_int gl.Lpoints[MAX_LC + 1]; //, in_rel[MAX_LC + 1];
 
 APP_INIT_DATA aid;
 bool compareWithFile = false;
@@ -225,46 +225,13 @@ int main(int argc, char** argv)
 	FILE* state, * infile;
 
 	int i, j, l, m, k, n, nrows, onlyrel, k2, ndir, iTemp, nIterMin, //, ndata
-		* ia, ial0, ial0_abs, ia_prd, ia_par[4], ia_cl,
-		lcNumber, ** ifp, newConw;
+        ial0, ial0_abs, ia_prd, ia_par[4], ia_cl, // *ia,
+		lcNumber, newConw; //, ** ifp
 
-	double startPeriod, periodStepCoef, endPeriod,
-		startFrequency, frequencyStep, endFrequency, stopCondition,
-		* t, * f, * at, * af;
+	double startPeriod, periodStepCoef, endPeriod, startFrequency, frequencyStep, endFrequency, stopCondition;
 
-	double jd0, jd00, conw, conwR, a0 = 1.05, b0 = 1.00, c0 = 0.95, a, b, cAxis,
-		al0, al0Abs, ave, e0Len, elen, cosAlpha, dth, dph, rfit, escl, //cl
-		 e[4], e0[4], // ee[MAX_N_OBS + 1][3], ee0[MAX_N_OBS + 1][3], * brightness,
-		* cg, * cgFirst, * sig, * al, //, * tim
-		* weightLc; // par[4]
-
-	//, lambdaPole[N_POLES + 1], betaPole[N_POLES + 1]
 	cl_int ndata;
 	cl_double cl;
-
-	//cl_double lambdaPole[N_POLES + 1];
-	//cl_double betaPole[N_POLES + 1];
-    double lambdaPole[N_POLES + 1] = {0.0, 0.0, 90.0, 180.0, 270.0, 60.0, 180.0, 300.0, 60.0, 180.0, 300.0};
-    double betaPole[N_POLES + 1] = {0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 60.0, 60.0, -60.0, -60.0, -60.0};
-
-    int ia_lambda_pole = 1;
-    int ia_beta_pole = 1;
-
-    //mINI::INIFile iniFile("settings.ini");
-
-	BOINC_OPTIONS options;
-	boinc_options_defaults(options);
-	options.normal_thread_priority = true;
-	retval = boinc_init_options(&options);
-
-	if (retval) {
-		fprintf(stderr, "%s boinc_init returned %d\n",
-			boinc_msg_prefix(buf, sizeof(buf)), retval
-		);
-		exit(retval);
-	}
-
-    boinc_get_init_data(aid);
 
 	// resolve logical name first
 	boinc_resolve_filename(input_filename, inputPath, sizeof(inputPath));
@@ -285,43 +252,54 @@ int main(int argc, char** argv)
     std::vector<double> tim(gl.maxDataPoints + 2, 0.0);
     /* Brightness*/
     std::vector<double> brightness(gl.maxDataPoints + 4, 0.0);
+    /* Solar phase angle */
+    std::vector<double> al(gl.Lcurves + 1, 0.0);
+    /* Weights...*/
+    std::vector<double> weightLc(gl.Lcurves + 1, 0.0);
+    /* Ecliptic astronomical tempo-centric coordinates of the Sun in AU*/
+    double e0[4];
+    /* Ecliptic astronomical centric coordinates of the Earth in AU*/
+    double e[4];
+    /* Normalization of distance vectors*/
+    std::vector<std::vector<double>> ee;
+    init_matrix(ee, gl.maxDataPoints + 1, 3, 0.0);
+    std::vector<std::vector<double>> ee0;
+    init_matrix(ee0, gl.maxDataPoints + 1, 3, 0.0);
 
-	cl_double par[4];
-	cl_double  ee[MAX_N_OBS + 1][3], ee0[MAX_N_OBS + 1][3];
+    double jd0, jd00, conw, conwR, a0 = 1.05, b0 = 1.00, c0 = 0.95, a, b, cAxis, al0, al0Abs, ave, e0Len, elen,
+           cosAlpha, dth, dph, rfit, escl,
+           par[4];
 
-	char* stringTemp;
-	stringTemp = static_cast<char*>(malloc(MAX_LINE_LENGTH));
+	auto stringTemp = static_cast<char*>(malloc(MAX_LINE_LENGTH));
 
-	//   ee = matrix_double(MAX_N_OBS,3);
-	//   ee0 = matrix_double(MAX_N_OBS,3);
-	//   covar = matrix_double(MAX_N_PAR,MAX_N_PAR);
-	//   aalpha = matrix_double(MAX_N_PAR,MAX_N_PAR);
+    std::vector<double> sig(gl.maxDataPoints + 4, 0.0);
+    std::vector<double> cgFirst(gl.maxDataPoints + 2, 0.0);
+    std::vector<double> t(MAX_N_FAC + 1, 0.0);
+    std::vector<double> f(MAX_N_FAC + 1, 0.0);
+    std::vector<double> at(MAX_N_FAC + 1, 0.0);
+    std::vector<double> af(MAX_N_FAC + 1, 0.0);
+    std::vector<int> ia(MAX_N_PAR + 1, 0);
+    std::vector<std::vector<int>> ifp;
+    init_matrix<int>(ifp, MAX_N_FAC + 1, 4 + 1, 0);
 
-	ifp = matrix_int(MAX_N_FAC, 4);
-	//brightness = vector_double(MAX_N_OBS);
-	sig = vector_double(MAX_N_OBS);
-	cg = vector_double(MAX_N_PAR);
-	cgFirst = vector_double(MAX_N_PAR);
-	t = vector_double(MAX_N_FAC);
-	f = vector_double(MAX_N_FAC);
-	at = vector_double(MAX_N_FAC);
-	af = vector_double(MAX_N_FAC);
-	ia = vector_int(MAX_N_PAR);
+    double lambdaPole[N_POLES + 1] = {0.0, 0.0, 90.0, 180.0, 270.0, 60.0, 180.0, 300.0, 60.0, 180.0, 300.0};
+    double betaPole[N_POLES + 1] = {0.0, 0.0, 0.0, 0.0, 0.0, 60.0, 60.0, 60.0, -60.0, -60.0, -60.0};
 
-	// tim = vector_cl_double(MAX_N_OBS);
-	//cl_double* tim = vector_double(MAX_N_OBS);
+    int ia_lambda_pole = 1;
+    int ia_beta_pole = 1;
 
-	//lambdaPole[1] = 0;    betaPole[1] = 0;
-	//lambdaPole[2] = 90;   betaPole[2] = 0;
-	//lambdaPole[3] = 180;  betaPole[3] = 0;
-	//lambdaPole[4] = 270;  betaPole[4] = 0;
-	//lambdaPole[5] = 60;   betaPole[5] = 60;
-	//lambdaPole[6] = 180;  betaPole[6] = 60;
-	//lambdaPole[7] = 300;  betaPole[7] = 60;
-	//lambdaPole[8] = 60;   betaPole[8] = -60;
-	//lambdaPole[9] = 180;  betaPole[9] = -60;
-	//lambdaPole[10] = 300; betaPole[10] = -60;
-	//ia_lambda_pole = ia_beta_pole = 1;
+    BOINC_OPTIONS options;
+    boinc_options_defaults(options);
+    options.normal_thread_priority = true;
+    retval = boinc_init_options(&options);
+
+    if (retval)
+    {
+        fprintf(stderr, "%s boinc_init returned %d\n", boinc_msg_prefix(buf, sizeof(buf)), retval);
+        exit(retval);
+    }
+
+    boinc_get_init_data(aid);
 
 	// open the input file
 	infile = boinc_fopen(inputPath, "r");
@@ -437,15 +415,13 @@ int main(int argc, char** argv)
 
 	/* lightcurves + geometry file */
 	/* number of lightcurves and the first realtive one */
-	fscanf(infile, "%d", &l_curves);
+    int tlcurves;
+	fscanf(infile, "%d", &tlcurves);
 
-	if (l_curves > MAX_LC)
-	{
-		fprintf(stderr, "\nError: Number of lcs  is greater than MAX_LC = %d\n", MAX_LC); fflush(stderr); exit(2);
-	}
-
-	al = vector_double(l_curves);
-	weightLc = vector_double(l_curves);
+	if (boinc_is_standalone())
+    {
+        printf("%d  Number of light curves\n", gl.Lcurves);
+    }
 
 	ndata = 0; /* total number of data */
 	k2 = 0;   /* index */
@@ -457,37 +433,25 @@ int main(int argc, char** argv)
 	jd0 = jd00;
 	a = a0; b = b0; cAxis = c0;
 
-	max_l_points = 0;
+	//max_l_points = 0;
 	/* loop over lightcurves */
-	for (i = 1; i <= l_curves; i++)
+	for (i = 1; i <= gl.Lcurves; i++)
 	{
 		ave = 0; /* average */
-		fscanf(infile, "%d %d", &l_points[i], &iTemp); /* points in this lightcurve */
+		fscanf(infile, "%d %d", &gl.Lpoints[i], &iTemp); /* points in this lightcurve */
 		if (boinc_is_standalone())
 		{
-			printf("%d points in light curve[%d]\n", l_points[i], i);
+			printf("%d points in light curve[%d]\n", gl.Lpoints[i], i);
 		}
 		fgets(stringTemp, MAX_LINE_LENGTH, infile);
-		in_rel[i] = 1 - iTemp;
-		if (in_rel[i] == 0)
+		gl.Inrel[i] = 1 - iTemp;
+		if (gl.Inrel[i] == 0)
 			onlyrel = 0;
 
-		if (l_points[i] > max_l_points) max_l_points = l_points[i];
-
-		if (l_points[i] > POINTS_MAX)
-		{
-			fprintf(stderr, "\nError: Number of lc points is greater than POINTS_MAX = %d\n", POINTS_MAX); fflush(stderr); exit(2);
-		}
-
 		/* loop over one lightcurve */
-		for (j = 1; j <= l_points[i]; j++)
+		for (j = 1; j <= gl.Lpoints[i]; j++)
 		{
 			ndata++;
-
-			if (ndata > MAX_N_OBS)
-			{
-				fprintf(stderr, "\nError: Number of data is greater than MAX_N_OBS = %d\n", MAX_N_OBS); fflush(stderr); exit(2);
-			}
 
 			fscanf(infile, "%lf %lf", &tim[ndata], &brightness[ndata]); /* JD, brightness */
 			fscanf(infile, "%lf %lf %lf", &e0[1], &e0[2], &e0[3]); /* ecliptic astr_tempocentric coord. of the Sun in AU */
@@ -520,7 +484,7 @@ int main(int argc, char** argv)
 					al0 = al[i];
 					ial0 = ndata;
 				}
-				if ((al[i] < al0Abs) && (in_rel[i] == 0))
+				if ((al[i] < al0Abs) && (gl.Inrel[i] == 0))
 				{
 					al0Abs = al[i];
 					ial0_abs = ndata;
@@ -528,13 +492,13 @@ int main(int argc, char** argv)
 			}
 		} /* j, one lightcurve */
 
-		ave /= l_points[i];
+		ave /= gl.Lpoints[i];
 
 		/* Mean brightness of lcurve
 		   Use the mean brightness as 'sigma' to renormalize the
 		   mean of each lightcurve to unity */
 
-		for (j = 1; j <= l_points[i]; j++)
+		for (j = 1; j <= gl.Lpoints[i]; j++)
 		{
 			k2++;
 			sig[k2] = ave;
@@ -543,7 +507,7 @@ int main(int argc, char** argv)
 	} /* i, all lightcurves */
 
 	/* initiation of weights */
-	for (i = 1; i <= l_curves; i++)
+	for (i = 1; i <= gl.Lcurves; i++)
 		weightLc[i] = -1;
 
 	/* reads weights */
@@ -575,18 +539,18 @@ int main(int argc, char** argv)
 	phi_0 = phi_0 * DEG2RAD;
 
 	k = 0;
-	for (i = 1; i <= l_curves; i++)
-		for (j = 1; j <= l_points[i]; j++)
+	for (i = 1; i <= gl.Lcurves; i++)
+		for (j = 1; j <= gl.Lpoints[i]; j++)
 		{
 			k++;
 			if (weightLc[i] == -1)
-				weight[k] = 1;
+				gl.Weight[k] = 1;
 			else
-				weight[k] = weightLc[i];
+				gl.Weight[k] = weightLc[i];
 		}
 
 	for (i = 1; i <= 3; i++)
-		weight[k + i] = 1;
+		gl.Weight[k + i] = 1;
 
 	/* use calibrated data if possible */
 	if (onlyrel == 0)
@@ -612,9 +576,7 @@ int main(int argc, char** argv)
 	/* Convexity regularization: make one last 'lightcurve' that
 	   consists of the three comps. of the residual nonconv. vect.
 	   that should all be zero */
-	l_curves = l_curves + 1;
-	l_points[l_curves] = 3;
-	in_rel[l_curves] = 0;
+    MakeConvexityRegularization(gl);
 
     for (int ii = 0; ii < argc; ii++) {
         if (strcmp(argv[ii], "--compare") == 0 && ii + 1 < argc)
@@ -661,7 +623,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "Version: %d.%d.%d.%d\n", major, minor, build, revision);
     }
 
-	retval = ClPrepare(clDevice, betaPole, lambdaPole, par, cl, a_lamda_start, a_lamda_incr, ee, ee0, tim, phi_0, checkpointExists, ndata);
+	retval = ClPrepare(clDevice, betaPole, lambdaPole, par, cl, a_lamda_start, a_lamda_incr, ee, ee0, tim, phi_0, checkpointExists, ndata, gl);
 	if (retval)
 	{
 		fflush(stderr);
@@ -782,7 +744,8 @@ int main(int argc, char** argv)
 			fprintf(stderr, "\nError: Number of parameters is greater than MAX_N_PAR = %d\n", MAX_N_PAR); fflush(stderr); exit(2);
 		}
 
-		retval = ClPrecalc(startFrequency, endFrequency, frequencyStep, stopCondition, nIterMin, &conwR, ndata, ia, ia_par, &newConw, cgFirst, sig, num_fac, brightness, cl, n_coef);
+		retval = ClPrecalc(startFrequency, endFrequency, frequencyStep, stopCondition, nIterMin, &conwR, ndata, ia, ia_par, &newConw, cgFirst, sig, num_fac,
+            brightness, gl, cl, n_coef);
 		if (retval)
 		{
 		    fflush(stderr);
@@ -901,30 +864,31 @@ int main(int argc, char** argv)
 
 	//CUDAStart(nStartFrom, startFrequency, endFrequency, frequencyStep, stopCondition, nIterMin, conwR, ndata, ia, ia_par, cgFirst, out, escl, sig, num_fac, brightness);
     //        ClPrecalc(startFrequency, endFrequency, frequencyStep, stopCondition, nIterMin, &conwR, ndata, ia, ia_par, &newConw, cgFirst, sig, num_fac, brightness, cl, n_coef);
-	ClStart(nStartFrom, startFrequency, endFrequency, frequencyStep, stopCondition, nIterMin, conwR, ndata, ia, ia_par, cgFirst, out, escl, sig, num_fac, brightness);
+	ClStart(nStartFrom, startFrequency, endFrequency, frequencyStep, stopCondition, nIterMin, conwR, ndata, ia, ia_par, cgFirst, out, escl, sig, num_fac, brightness, gl);
 
 	out.close();
 
-	// CUDAUnprepare();
+	ReleaseGlobalClObjects();
 
 	//  deallocate_matrix_double(ee,MAX_N_OBS);
 	//  deallocate_matrix_double(ee0,MAX_N_OBS);
 	//  deallocate_matrix_double(covar,MAX_N_PAR);
 	//  deallocate_matrix_double(aalpha,MAX_N_PAR);
-	deallocate_matrix_int(ifp, MAX_N_FAC);
+	//deallocate_matrix_int(ifp, MAX_N_FAC);
 
 	//deallocate_vector(tim);
 	//deallocate_vector(brightness);
-	deallocate_vector(sig);
-	deallocate_vector(cg);
-	deallocate_vector(cgFirst);
-	deallocate_vector(t);
-	deallocate_vector(f);
-	deallocate_vector(at);
-	deallocate_vector(af);
-	deallocate_vector(ia);
-	deallocate_vector(al);
-	deallocate_vector(weightLc);
+	//deallocate_vector(al);
+	//deallocate_vector(weightLc);
+	//deallocate_vector(sig);
+	//deallocate_vector(cgFirst);
+	//deallocate_vector(cg);
+	//deallocate_vector(t);
+	//deallocate_vector(f);
+	//deallocate_vector(at);
+	//deallocate_vector(af);
+	//deallocate_vector(ia);
+
 	free(stringTemp);
 
 	boinc_fraction_done(1);

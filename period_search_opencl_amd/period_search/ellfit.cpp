@@ -6,10 +6,11 @@
 
 #include "stdafx.h"
 #include <math.h>
+#include <vector>
 #include "globals.h"
 #include "declarations.hpp"
 
-void ellfit(double cg[], double a, double b, double c, int ndir, int ncoef, double at[], double af[])
+void ellfit(std::vector<double>& cg, double a, double b, double c, int ndir, int ncoef, std::vector<double>& at, std::vector<double>& af)
 {
     int i, m, l, n, j, k;
     int* indx;

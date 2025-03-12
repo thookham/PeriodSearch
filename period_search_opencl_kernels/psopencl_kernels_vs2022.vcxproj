@@ -144,37 +144,37 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="OpenCl\blmatrix.cl">
-      <DeploymentContent>true</DeploymentContent>
+      <DeploymentContent>false</DeploymentContent>
     </None>
     <None Include="OpenCl\bright.cl">
-      <DeploymentContent>true</DeploymentContent>
+      <DeploymentContent>false</DeploymentContent>
     </None>
     <None Include="OpenCl\conv.cl">
-      <DeploymentContent>true</DeploymentContent>
+      <DeploymentContent>false</DeploymentContent>
     </None>
     <None Include="OpenCl\curv.cl">
-      <DeploymentContent>true</DeploymentContent>
+      <DeploymentContent>false</DeploymentContent>
     </None>
     <None Include="OpenCl\Curv2.cl">
-      <DeploymentContent>true</DeploymentContent>
+      <DeploymentContent>false</DeploymentContent>
     </None>
     <None Include="OpenCl\gauss_errc.cl">
-      <DeploymentContent>true</DeploymentContent>
+      <DeploymentContent>false</DeploymentContent>
     </None>
     <None Include="OpenCl\Intrinsics.cl">
-      <DeploymentContent>true</DeploymentContent>
+      <DeploymentContent>false</DeploymentContent>
     </None>
     <None Include="OpenCl\mrqcof.cl">
-      <DeploymentContent>true</DeploymentContent>
+      <DeploymentContent>false</DeploymentContent>
     </None>
     <None Include="OpenCl\mrqmin.cl">
-      <DeploymentContent>true</DeploymentContent>
+      <DeploymentContent>false</DeploymentContent>
     </None>
     <None Include="OpenCl\Start.cl">
-      <DeploymentContent>true</DeploymentContent>
+      <DeploymentContent>false</DeploymentContent>
     </None>
     <None Include="OpenCl\swap.cl">
-      <DeploymentContent>true</DeploymentContent>
+      <DeploymentContent>false</DeploymentContent>
     </None>
   </ItemGroup>
   <ItemGroup>

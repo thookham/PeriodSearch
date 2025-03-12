@@ -1,19 +1,23 @@
 #pragma once
  #include <CL/cl.h>
 // #include <CL/cl_platform.h>
-
+#include <vector>
 #include <stdbool.h>
 #include <string>
+
 #if defined _WIN32
 #include "Windows.h"
 #endif
 
-void trifac(int nrows, int **ifp);
-void areanorm(double t[], double f[], int ndir, int nfac, int **ifp,
-              double at[], double af[]);
-void sphfunc(int ndir, double at[], double af[]);
-void ellfit(double r[], double a, double b, double c,
-            int ndir, int ncoef, double at[], double af[]);
+void trifac(int nrows, std::vector<std::vector<int>> &ifp);
+
+void areanorm(const std::vector<double> &t, const std::vector<double> &f, const int ndir, const int nfac,
+                const std::vector<std::vector<int>>& ifp, std::vector<double>& at, std::vector<double>& af);
+
+void sphfunc(int ndir, std::vector<double> &at, std::vector<double> &af);
+
+void ellfit(std::vector<double>& cg, double a, double b, double c, int ndir, int ncoef, std::vector<double>& at, std::vector<double>& af);
+
 void lubksb(double **a, int n, int indx[], double b[]);
 void ludcmp(double **a, int n, int indx[], double d[]);
 int mrqmin(double **x1, double **x2, double x3[], double y[],

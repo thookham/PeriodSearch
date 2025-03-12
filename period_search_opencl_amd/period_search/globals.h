@@ -23,12 +23,12 @@
 #include <string>
 
 extern cl_int l_max, m_max, n_iter, last_call,
-n_coef, num_fac, l_curves, n_ph_par,
-deallocate;
+n_coef, num_fac, n_ph_par,
+deallocate; // l_curves,
 
 extern cl_double o_chi_square, chi_square, a_lambda, a_lamda_incr, a_lamda_start, scale, // phi_0,
-area[MAX_N_FAC + 1], d_area[MAX_N_FAC + 1], sclnw[MAX_LC + 1],
-y_out[MAX_N_OBS + 1],
+area[MAX_N_FAC + 1], d_area[MAX_N_FAC + 1], // sclnw[MAX_LC + 1],
+//y_out[MAX_N_OBS + 1],
 f_c[MAX_N_FAC + 1][MAX_LM + 1], f_s[MAX_N_FAC + 1][MAX_LM + 1],
 t_c[MAX_N_FAC + 1][MAX_LM + 1], t_s[MAX_N_FAC + 1][MAX_LM + 1],
 d_sphere[MAX_N_FAC + 1][MAX_N_PAR + 1], d_g[MAX_N_FAC + 1][MAX_N_PAR + 1],
@@ -43,12 +43,12 @@ extern cl_program program;
 
 //extern std::vector<cl_int2, int> texture;
 
-extern cl_int max_l_points;
+//extern cl_int max_l_points;
 extern cl_double phi_0;
 extern cl_double Fc[MAX_N_FAC + 1][MAX_LM + 1], Fs[MAX_N_FAC + 1][MAX_LM + 1], Dsph[MAX_N_FAC + 1][MAX_N_PAR + 1], Dg[MAX_N_FAC + 1][MAX_N_PAR + 1];
 extern cl_double Area[MAX_N_FAC + 1], Darea[MAX_N_FAC + 1];
-extern cl_double weight[MAX_N_OBS + 1];
-extern cl_int l_points[MAX_LC + 1], in_rel[MAX_LC + 1];
+//extern cl_int l_points[MAX_LC + 1]; //, in_rel[MAX_LC + 1];
+//extern cl_double weight[MAX_N_OBS + 1];
 
 extern std::string kernelCurv, kernelDaveFile, kernelSig2wghtFile;
 //extern std::vector<cl::Platform> platforms;
