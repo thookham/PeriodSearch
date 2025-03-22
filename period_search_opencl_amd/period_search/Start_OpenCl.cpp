@@ -340,13 +340,10 @@ cl_int ClPrepare(cl_int deviceId, cl_double* beta_pole, cl_double* lambda_pole, 
     }
 
     std::string &savedKernelsHashString = ini["kernels"]["hash"];
-    auto &savedKernelsHash = savedKernelsHashString.empty()
-        ? 0
-        : savedKernelsHashString;
+    std::string savedKernelsHash = savedKernelsHashString.empty() ? "0" : savedKernelsHashString;
 
     if (savedKernelsHash != std::string(kernel_hash))
     {
-        //ini["kernels"]["hash"] = std::to_string(kernel_hash);
         ini["kernels"]["hash"] = std::string(kernel_hash);
         rebuildBinaries = true;
         file.write(ini, true);
