@@ -102,6 +102,7 @@
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>false</WholeProgramOptimization>
+    <EnableASAN>false</EnableASAN>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Linux_AMD|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -331,7 +332,7 @@
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <CompileAs>CompileAsCpp</CompileAs>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -460,7 +461,7 @@ call "$(ProjectDir)\stringify.bat"
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <EnableCOMDATFolding>false</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\period_search_common\x64_8.1\Release;C:\boincsdk\boinc\api;C:\boincsdk\boinc\lib;C:\boincsdk\boinc\win_build\Build\x64\Release;$(AMDAPPSDKROOT)lib\x86_64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -519,17 +520,13 @@ call "$(ProjectDir)\stringify.bat"
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="period_search\areanorm.cpp" />
-    <ClCompile Include="period_search\binaries.c" />
     <ClCompile Include="period_search\compareResult.cpp" />
     <ClCompile Include="period_search\covsrt.cpp" />
     <ClCompile Include="period_search\ellfit.cpp" />
     <ClCompile Include="period_search\HelperFunctions.cpp" />
-    <ClCompile Include="period_search\gauss_errc.cpp" />
-    <ClCompile Include="period_search\host_dot_product.cpp" />
     <ClCompile Include="period_search\kernels.cpp" />
     <ClCompile Include="period_search\lubksb.cpp" />
     <ClCompile Include="period_search\ludcmp.cpp" />
-    <ClCompile Include="period_search\memory.cpp" />
     <ClCompile Include="period_search\period_search_BOINC.cpp" />
     <ClCompile Include="period_search\phasec.cpp" />
     <ClCompile Include="period_search\sphfunc.cpp" />

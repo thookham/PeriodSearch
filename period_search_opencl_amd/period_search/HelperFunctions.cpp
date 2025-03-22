@@ -1,5 +1,4 @@
 #include "globals.h"
-//#include "opencl_helper.h"
 #include "opencl_helper.h"
 
 #include <cstdlib>

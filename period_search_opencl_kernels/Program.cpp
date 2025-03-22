@@ -1,131 +1,123 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <windows.h>
 
 #include "declarations.h"
 
-int main(int argc, char** argv)
-{
-    char cwd[260];
-    if (GetCurrentDirectoryA(sizeof(cwd), cwd)) {
-        std::cout << "Current working directory: " << cwd << std::endl;
-    }
-    else {
-        std::cerr << "GetCurrentDirectory() error" << std::endl;
-    }
-
-    std::time_t now = std::time(nullptr);
-
-    //std::string dtime = std::ctime(&now);
-    //std::hash<std::string> hasher;
-    //size_t hashValue = hasher(dtime);
-
-    //std::string kernelHashFile = "kernels_hash.cpp";
-    //std::ofstream hFile(kernelHashFile, std::ios::out | std::ios::binary);
-    //hFile << std::endl << "inline const int kernel_hash = " << hashValue << ";" << std::endl;
-    //hFile.close();
-
-    char datetime[100];
-    struct tm timeinfo;
-    localtime_s(&timeinfo, &now);
-    std::strftime(datetime, sizeof(datetime), "%Y-%m-%d %H:%M:%S", &timeinfo);
-
-    std::string dateTimeString(datetime);
-    std::hash<std::string> hasher;
-    size_t hashValue = hasher(dateTimeString);
-
-    std::string kernelHashFile = "kernels_hash.cpp";
-    std::ofstream hFile(kernelHashFile, std::ios::out | std::ios::binary);
-    hFile << std::endl << "inline const int kernel_hash = " << hashValue << ";" << std::endl;
-    hFile.close();
-
-	std::string kernelSourceFile = "kernelSource.cl";
-
-    // Load CL file, build CL program object, create CL kernel object
-#if !defined _WIN32
-    std::ifstream constantsFile("OpenCl/constants.h", std::ios::in | std::ios::binary);
-    std::ifstream globalsFile("OpenCl/GlobalsCL.h", std::ios::in | std::ios::binary);
-    std::ifstream intrinsicsFile("OpenCl/Intrinsics.cl", std::ios::in | std::ios::binary);
-    std::ifstream swapFile("OpenCl/swap.cl", std::ios::in | std::ios::binary);
-    std::ifstream blmatrixFile("OpenCl/blmatrix.cl", std::ios::in | std::ios::binary);
-    std::ifstream curvFile("OpenCl/curv.cl", std::ios::in | std::ios::binary);
-    std::ifstream curv2File("OpenCl/Curv2.cl", std::ios::in | std::ios::binary);
-    std::ifstream mrqcofFile("OpenCl/mrqcof.cl", std::ios::in | std::ios::binary);
-    std::ifstream startFile("OpenCl/Start.cl", std::ios::in | std::ios::binary);
-    std::ifstream brightFile("OpenCl/bright.cl", std::ios::in | std::ios::binary);
-    std::ifstream convFile("OpenCl/conv.cl", std::ios::in | std::ios::binary);
-    std::ifstream mrqminFile("OpenCl/mrqmin.cl", std::ios::in | std::ios::binary);
-    std::ifstream gauserrcFile("OpenCl/gauss_errc.cl", std::ios::in | std::ios::binary);
-    //std::ifstream testFile("OpenCl/test.cl", std::ios::in | std::ios::binary);
-#else
-    std::ifstream constantsFile("OpenCl/constants.h");
-    if (!constantsFile.good())
-    {
-        std::cerr << "Error: Failed to open constants.h" << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    std::ifstream globalsFile("OpenCl/GlobalsCL.h");
-    std::ifstream intrinsicsFile("OpenCl/Intrinsics.cl");
-    std::ifstream swapFile("OpenCl/swap.cl");
-    std::ifstream blmatrixFile("OpenCl/blmatrix.cl");
-    std::ifstream curvFile("OpenCl/curv.cl");
-    std::ifstream curv2File("OpenCl/Curv2.cl");
-    std::ifstream mrqcofFile("OpenCl/mrqcof.cl");
-    std::ifstream startFile("OpenCl/Start.cl");
-    std::ifstream brightFile("OpenCl/bright.cl");
-    std::ifstream convFile("OpenCl/conv.cl");
-    std::ifstream mrqminFile("OpenCl/mrqmin.cl");
-    std::ifstream gauserrcFile("OpenCl/gauss_errc.cl");
+#if defined _MSC_VER
+#include <windows.h>
 #endif
 
-    // NOTE: The following order is crucial
-    std::stringstream st;
+#define MINI_CASE_SENSITIVE
+#include "ini.h"
 
-    // 1. First load all helper and function Cl files which will be used by the kernels;
-    st << constantsFile.rdbuf();
+static std::vector<std::string> splitString(const std::string& str, char delimiter)
+{
+	std::vector<std::string> tokens;
+	std::stringstream ss(str);
+	std::string token;
 
-    st << globalsFile.rdbuf();
-    st << intrinsicsFile.rdbuf();
-    st << swapFile.rdbuf();
-    st << blmatrixFile.rdbuf();
-    st << curvFile.rdbuf();
-    st << curv2File.rdbuf();
-    st << brightFile.rdbuf();
-    st << convFile.rdbuf();
-    st << mrqcofFile.rdbuf();
-    st << gauserrcFile.rdbuf();
-    st << mrqminFile.rdbuf();
+	while (std::getline(ss, token, delimiter)) {
+		tokens.push_back(token);
+	}
 
-    //2. Load the files that contains all kernels;
-    st << startFile.rdbuf();
+	return tokens;
+}
 
-    auto kernel_code = st.str(); //.c_str();
-    st.flush();
+std::vector<std::string> readFileList(const std::string& filename)
+{
+	std::vector<std::string> lines;
+	std::ifstream file(filename);
+	std::string line;
 
-    constantsFile.close();
-    globalsFile.close();
-    intrinsicsFile.close();
-    startFile.close();
-    blmatrixFile.close();
-    curvFile.close();
-    mrqcofFile.close();
-    brightFile.close();
-    curv2File.close();
-    convFile.close();
-    mrqminFile.close();
-    gauserrcFile.close();
-    swapFile.close();
-    //testFile.close();
+	if (file.is_open())
+	{
+		while (std::getline(file, line))
+		{
+			// Check if line is empty or contains only whitespace
+			bool isWhitespaceOnly = true;
+			for (char ch : line)
+			{
+				if (!std::isspace(ch))
+				{
+					isWhitespaceOnly = false;
+					break;
+				}
+			}
 
-    // cerr << kernel_code << endl;
-    std::ofstream out(kernelSourceFile, std::ios::out | std::ios::binary);
-    out << kernel_code << std::endl;
+			if (line.empty() || isWhitespaceOnly || line[0] == '#') {
+				continue;
+			}
 
-    out << "// Created on: " << datetime << std::endl;
+			lines.push_back(line);
+		}
 
-    out.close();
+		file.close();
+	}
+	else
+	{
+		std::cerr << "Unable to open file: " << filename << std::endl;
+	}
 
-	std::cout << "Kernel source file created: " << kernelSourceFile << std::endl;
+	return lines;
+}
+
+int main(int argc, char** argv)
+{
+	mINI::INIFile file("kernels.ini");
+	mINI::INIStructure ini;
+
+	if (!file.read(ini))
+	{
+		exit(1);
+	}
+
+	std::string sourcepath = ini["kernel_files"]["sourcepath"];
+	std::string outputpath = ini["kernel_files"]["outputpath"];
+	std::string fileList = ini["kernel_files"]["file_list"];
+
+	std::time_t now = std::time(nullptr);
+
+	char datetime[100];
+	struct tm timeinfo;
+	localtime_s(&timeinfo, &now);
+	std::strftime(datetime, sizeof(datetime), "%Y-%m-%d %H:%M:%S", &timeinfo);
+
+	std::string dateTimeString(datetime);
+	std::hash<std::string> hasher;
+	size_t hashValue = hasher(dateTimeString);
+
+	std::string kernelHashFile = outputpath + "kernels_hash.cpp";
+	std::ofstream hFile(kernelHashFile, std::ios::out | std::ios::binary);
+	hFile << std::endl << "inline const char* kernel_hash = \"" << hashValue << "\";" << std::endl;
+	hFile.close();
+
+	std::string kernelsOutputFile = outputpath + "kernelSource.cl";
+	std::stringstream st;
+
+	auto files = readFileList(fileList);
+
+	for (int i = 0; i < files.size(); i++)
+	{
+		auto clFile = sourcepath + files[i];
+#if !defined _WIN32
+		std::ifstream clfile(clFile, std::ios::in | std::ios::binary);
+#else
+		std::ifstream clfile(clFile);
+#endif
+		st << clfile.rdbuf();
+		clfile.close();
+	}
+
+	auto kernel_code = st.str(); //.c_str();
+	st.flush();
+
+	std::ofstream out(kernelsOutputFile, std::ios::out | std::ios::binary);
+	out << kernel_code << std::endl;
+
+	out << "// Created on: " << datetime << std::endl;
+
+	out.close();
+
+	std::cout << "Kernel source file created: " << kernelsOutputFile << std::endl;
 }

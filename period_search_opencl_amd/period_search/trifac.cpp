@@ -6,16 +6,19 @@
 
 #include "globals.h"
 #include "declarations.hpp"
+#include "arrayHelpers.hpp"
 
 void trifac(int nrows, std::vector<std::vector<int>> &ifp)
 {
-   int nnod, i, j, j0, j1, j2, j3, ntri;
+   int i, j, j0, j1, j2, j3, ntri;
 
-   int **nod;
+   //int **nod;
 
-   nod = matrix_int(2*nrows, 4*nrows);
+   //nod = matrix_int(2*nrows, 4*nrows);
+   std::vector<std::vector<int>> nod;
+   init_matrix(nod, 2 * nrows + 1, 4 * nrows + 1, 0);
 
-   nnod = 1; /* index from 1 to number of vertices */
+   int nnod = 1; /* index from 1 to number of vertices */
    nod[0][0] = nnod;
    for (i = 1; i <= nrows; i++)
       for (j = 0; j <= 4 * i - 1; j++)
@@ -78,5 +81,5 @@ void trifac(int nrows, std::vector<std::vector<int>> &ifp)
          }
       }
 
-   deallocate_matrix_int(nod, 2*nrows);
+   //deallocate_matrix_int(nod, 2*nrows);
 }

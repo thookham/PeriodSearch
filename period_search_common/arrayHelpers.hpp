@@ -264,8 +264,8 @@ std::vector<T> flatten2Dvector(const std::vector<std::vector<T>>& matrix)
 	return flattened_vec;
 }
 
-double dot_product(const double a[], const double b[]);
-double optimized_dot_product(const double a[], const double b[]);
+double dot_product(const double a[4], const double b[4]);
+double optimized_dot_product(const double a[4], const double b[4]);
 void dot_product_new(double a[4], double b[4], double &c);
 
 void init2Darray(double**& matrix, int dytemp_siszeX, int dytemp_sizeY);
@@ -290,11 +290,11 @@ extern struct globals
 #else
 #if _MSC_VER >= 1900 // Visual Studio 2015 or later
 	// NOTE: About MSVC - https://learn.microsoft.com/en-us/cpp/cpp/alignment-cpp-declarations?view=msvc-170
-	alignas(64) double Nor[3][MAX_N_FAC + 8];
-	alignas(64) double Area[MAX_N_FAC + 8];
-	alignas(64) double Darea[MAX_N_FAC + 8];
-	alignas(64) double Dg[MAX_N_FAC + 16][MAX_N_PAR + 8];
-	alignas(64) double dyda[MAX_N_PAR + 16];
+	alignas(64) double Nor[3][MAX_N_FAC + 8] = {};
+	alignas(64) double Area[MAX_N_FAC + 8] = {};
+	alignas(64) double Darea[MAX_N_FAC + 8] = {};
+	alignas(64) double Dg[MAX_N_FAC + 16][MAX_N_PAR + 8] = {};
+	alignas(64) double dyda[MAX_N_PAR + 16] = {};
 	alignas(64) std::vector<std::vector<double>> covar;
 	alignas(64) std::vector<std::vector<double>> alpha;
 #else

@@ -1,0 +1,14 @@
+# keep in mind file order is crucial for the kernels to work!
+constants.h
+GlobalsCL.h
+Intrinsics.cl
+swap.cl
+blmatrix.cl
+curv.cl
+Curv2.cl
+bright.cl
+conv.cl
+mrqcof.cl
+gauss_errc.cl
+mrqmin.cl
+Start.cl

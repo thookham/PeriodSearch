@@ -39,19 +39,10 @@
     <ClCompile Include="period_search\covsrt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="period_search\gauss_errc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="period_search\host_dot_product.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="period_search\lubksb.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="period_search\ludcmp.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="period_search\memory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="period_search\phasec.cpp">
@@ -64,9 +55,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="period_search\VersionInfo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="period_search\binaries.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="period_search\HelperFunctions.cpp">

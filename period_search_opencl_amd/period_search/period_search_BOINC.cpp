@@ -97,6 +97,11 @@
 #include "boinc_win.h"
 #include "Windows.h"
 #include <Shlwapi.h>
+
+#if defined _DEBUG
+#include <crtdbg.h>
+#endif
+
 #else
 // #include "../win_build/config.h"
 #include <cstdio>
@@ -144,7 +149,6 @@ int DoCheckpoint(MFILE& mf, const int nlines, const int newConw, const double co
 	string resolvedName;
 
 	const auto f = fopen("temp", "w");
-	// const auto f = fopen("temp", "e");
 	if (!f) return 1;
 	fprintf(f, "%d %d %.17g", nlines, newConw, conwr);
 	fclose(f);
@@ -187,27 +191,22 @@ void update_shmem() {
 // NOTE: global parameters
 cl_int l_max, m_max, n_iter, last_call,
 n_coef, num_fac, n_ph_par,
-deallocate; // , max_l_points; // n_iter, l_curves,
+deallocate;
 
 double o_chi_square, chi_square, a_lambda, scale, //phi_0
-d_area[MAX_N_FAC + 1], //sclnw[MAX_LC + 1], /*Area[MAX_N_FAC+1],*/
-//y_out[MAX_N_OBS + 1],
+d_area[MAX_N_FAC + 1],
 f_c[MAX_N_FAC + 1][MAX_LM + 1], f_s[MAX_N_FAC + 1][MAX_LM + 1],
 t_c[MAX_N_FAC + 1][MAX_LM + 1], t_s[MAX_N_FAC + 1][MAX_LM + 1],
 d_sphere[MAX_N_FAC + 1][MAX_N_PAR + 1], d_g[MAX_N_FAC + 1][MAX_N_PAR + 1],
 normal[MAX_N_FAC + 1][3], bl_matrix[4][4],
 pleg[MAX_N_FAC + 1][MAX_LM + 1][MAX_LM + 1],
 d_bl_matrix[3][4][4];
-//weight[MAX_N_OBS + 1];
 
 // OpenCL
 string kernelCurv, kernelDaveFile, kernelSig2wghtFile;
 cl_double a_lamda_incr;
 cl_double a_lamda_start;
 cl_double phi_0;
-//cl_double weight[MAX_N_OBS + 1];
-//cl_int max_l_points;
-//cl_int gl.Lpoints[MAX_LC + 1]; //, in_rel[MAX_LC + 1];
 
 APP_INIT_DATA aid;
 bool compareWithFile = false;
@@ -219,14 +218,14 @@ int main(int argc, char** argv)
 {
     //SetEnvironmentVariable("NEO_CACHE_PERSISTENT", "0");
 
-	int retval, nlines, checkpointExists, nStartFrom;  //int c, nchars = 0 // double fsize, fd;
+	int retval, nlines, checkpointExists, nStartFrom;
 	char inputPath[512], outputPath[512], chkptPath[512], buf[256];
 	MFILE out;
 	FILE* state, * infile;
 
-	int i, j, l, m, k, n, nrows, onlyrel, k2, ndir, iTemp, nIterMin, //, ndata
-        ial0, ial0_abs, ia_prd, ia_par[4], ia_cl, // *ia,
-		lcNumber, newConw; //, ** ifp
+	int i, j, l, m, k, n, nrows, onlyrel, k2, ndir, iTemp, nIterMin,
+        ial0, ial0_abs, ia_prd, ia_par[4], ia_cl,
+		lcNumber, newConw;
 
 	double startPeriod, periodStepCoef, endPeriod, startFrequency, frequencyStep, endFrequency, stopCondition;
 
@@ -313,7 +312,6 @@ int main(int argc, char** argv)
 
 	// output file
 	boinc_resolve_filename(output_filename, outputPath, sizeof(outputPath));
-	//    out.open(output_path, "w");
 
 		// See if there's a valid checkpoint file.
 		// If so seek input file and truncate output file
@@ -476,7 +474,7 @@ int main(int argc, char** argv)
 
 			if (j == 1)
 			{
-				cosAlpha = host_dot_product(e, e0) / (elen * e0Len);
+				cosAlpha = dot_product(e, e0) / (elen * e0Len);
 				al[i] = acos(cosAlpha); /* solar phase angle */
 				/* Find the smallest solar phase al0 (not important, just for info) */
 				if (al[i] < al0)
@@ -902,20 +900,25 @@ int main(int argc, char** argv)
     {
 	    CompareResult(output_filename, compareFilename);
     }
+
+    //std::cerr << "*** CRT memory leak dump ***" << std::endl;
+    //_CrtDumpMemoryLeaks(); // Check for memory leaks
+    //std::cerr << "*** END CRT memory leak dump ***" << std::endl;
 #endif
+
 
 	boinc_finish(0);
 }
 
-
-void BeginExit(int retval)
-{
-}
-
-
-
 #ifdef _WIN32
-int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR Args, int WinMode) {
+
+//int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR Args, int WinMode)
+int WINAPI WinMain(
+    _In_ HINSTANCE hInstance,
+    _In_opt_ HINSTANCE hPrevInstance,
+    _In_ LPSTR lpCmdLine,
+    _In_ int nCmdShow)
+{
 	LPSTR command_line;
 	char* argv[100];
 	int argc;

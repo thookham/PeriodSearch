@@ -16,44 +16,47 @@ void areanorm(const std::vector<double> &t, const std::vector<double> &f, const 
 
 void sphfunc(int ndir, std::vector<double> &at, std::vector<double> &af);
 
-void ellfit(std::vector<double>& cg, double a, double b, double c, int ndir, int ncoef, std::vector<double>& at, std::vector<double>& af);
+void ellfit(std::vector<double>& cg, const double a, const double b, const double c, const int ndir, const int ncoef,
+    const std::vector<double>& at, const std::vector<double>& af);
 
-void lubksb(double **a, int n, int indx[], double b[]);
-void ludcmp(double **a, int n, int indx[], double d[]);
-int mrqmin(double **x1, double **x2, double x3[], double y[],
-            double sig[], double a[], int ia[], int ma,
-	    double **covar, double **alpha);
-double mrqcof(double **x1, double **x2, double x3[], double y[],
-              double sig[], double a[], int ia[], int ma,
-	      double **alpha, double beta[], int mfit, int lastone, int lastma);
+void lubksb(const std::vector<std::vector<double>>& a, const int n, const std::vector<int>& indx, std::vector<double>& b);
+
+void ludcmp(std::vector<std::vector<double>> &a, const int n, std::vector<int> &indx, std::vector<double> &d);
+
+//int mrqmin(double **x1, double **x2, double x3[], double y[], double sig[], double a[], int ia[], int ma,
+//	    double **covar, double **alpha);
+//
+//double mrqcof(double **x1, double **x2, double x3[], double y[], double sig[], double a[], int ia[], int ma,
+//	      double **alpha, double beta[], int mfit, int lastone, int lastma);
+
 //double mrqcof(double **x1, double **x2, double x3[], double y[],
 //    double sig[], double a[], int ia[], int ma,
 //    double **alpha, double beta[], int mfit, int lastone, int lastma,
 //    cl_double _Fc[], cl_double _Fs[], cl_double _Dsph[], cl_double _Dg[]);
-void curv(double cg[]);
-void blmatrix(double bet, double lam);
-double conv(int nc, double dres[], int ma);
+//void curv(double cg[]);
+//void blmatrix(double bet, double lam);
+//double conv(int nc, double dres[], int ma);
 //void gauss_1(double **aa, int n, double b[]);
 void covsrt(double **covar, int ma, int ia[], int mfit);
 void phasec(double dcdp[], double alpha, double p[]);
-void matrix(double omg, double t, double tmat[][4], double dtm[][4][4]);
+//void matrix(double omg, double t, double tmat[][4], double dtm[][4][4]);
 //double bright(double ee[], double ee0[], double t, double cg[], double dyda[], int ncoef);
 //void shell(int n, double a[], int index[]);
 
-double *vector_double(int length);
-int *vector_int(int length);
-double **matrix_double(int rows, int columns);
-int **matrix_int(int rows, int columns);
-double ***matrix_3_double(int n_1, int n_2, int n_3);
-void deallocate_vector(void *p_x);
-void deallocate_matrix_double(double **p_x, int rows);
-void deallocate_matrix_int(int **p_x, int rows);
+//double *vector_double(int length);
+//int *vector_int(int length);
+//double **matrix_double(int rows, int columns);
+//int **matrix_int(int rows, int columns);
+//double ***matrix_3_double(int n_1, int n_2, int n_3);
+//void deallocate_vector(void *p_x);
+//void deallocate_matrix_double(double **p_x, int rows);
+//void deallocate_matrix_int(int **p_x, int rows);
 
 //cl_double* vector_cl_double(int length);
 
 //void deallocate_matrix_3(void ***p_x, int n_1, int n_2);
 
-double host_dot_product(double a[], double b[]);
+//double host_dot_product(double a[], double b[]);
 std::string transformKernelCode(const std::string &kernel_code);
 int GetProgramBuildInfo(const cl_program program,
                         const cl_device_id device,
@@ -117,7 +120,6 @@ double bright_ell_YORP(double ee[], double ee0[], double t, double cg[],
             double dyda[], int ncoef);
 void matrix_ell_YORP(double omg, double fi0, double yorp, double t, double tmat[][4], double dtm[][4][4]);
 */
-void curv1D(double cg[]);
 
 #if defined _WIN32
 bool GetVersionInfo(LPCTSTR filename, int& major, int& minor, int& build, int& revision);

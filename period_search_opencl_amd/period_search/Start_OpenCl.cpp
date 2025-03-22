@@ -340,13 +340,14 @@ cl_int ClPrepare(cl_int deviceId, cl_double* beta_pole, cl_double* lambda_pole, 
     }
 
     std::string &savedKernelsHashString = ini["kernels"]["hash"];
-    size_t savedKernelsHash = savedKernelsHashString.empty()
+    auto &savedKernelsHash = savedKernelsHashString.empty()
         ? 0
-        : std::stoll(savedKernelsHashString);
+        : savedKernelsHashString;
 
-    if (savedKernelsHash != kernel_hash)
+    if (savedKernelsHash != std::string(kernel_hash))
     {
-        ini["kernels"]["hash"] = std::to_string(kernel_hash);
+        //ini["kernels"]["hash"] = std::to_string(kernel_hash);
+        ini["kernels"]["hash"] = std::string(kernel_hash);
         rebuildBinaries = true;
         file.write(ini, true);
     }
@@ -627,7 +628,7 @@ cl_int ClPrepare(cl_int deviceId, cl_double* beta_pole, cl_double* lambda_pole, 
     if (!kernelExist || rebuildBinaries)
     {
         std::string action = rebuildBinaries ? "Rebuilding" : "Building";
-        std::cerr << action << "program" << std::endl;
+        std::cerr << action << " program" << std::endl;
         err_num = ClBuildProgramWithSource(name, device, deviceName, kernelFileName);
         if (err_num != CL_SUCCESS) return err_num;
     }
@@ -712,7 +713,7 @@ cl_int ClPrepare(cl_int deviceId, cl_double* beta_pole, cl_double* lambda_pole, 
         std::cerr << " Error in clGetKernelWorkGroupInfo: " << cl_error_to_str(err_num) << "(" << err_num << ")\n";
         return(1);
     }
-    cerr << "Prefered kernel work group size multiple: " << preferedWGS << endl;
+    cerr << "Preferred kernel work group size multiple: " << preferedWGS << endl;
 
     if (CUDA_grid_dim > devMaxWorkGroupSize) {
         CUDA_grid_dim = devMaxWorkGroupSize;
@@ -1076,7 +1077,7 @@ cl_int ClPrecalc(cl_double freq_start, cl_double freq_end, cl_double freq_step, 
     auto pfr = (mfreq_context*)_aligned_malloc(optimizedSize, 4096);
     auto CUDA_FR = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, frOptimizedSize, pfr, err);
 #elif defined AMD
-    int frSize = CUDA_grid_dim_precalc * sizeof(freq_result);
+    size_t frSize = CUDA_grid_dim_precalc * sizeof(freq_result);
     auto pfr = (freq_result*)_aligned_malloc(frSize, 128);
     cl_mem CUDA_FR = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, frSize, pfr, &err);
 #elif NVIDIA
@@ -1455,10 +1456,11 @@ cl_int ClPrecalc(cl_double freq_start, cl_double freq_end, cl_double freq_step, 
         queue.enqueueUnmapMemObject(CUDA_FR, fres);
         queue.flush();
 #elif AMD
-        //queue.enqueueUnmapMemObject(CUDA_FR, pfr);
-        //queue.flush();
         delete[] res;
+        _aligned_free(pcc);
         _aligned_free(pFa);
+        _aligned_free(pFb);
+        _aligned_free(pfr);
 #elif NVIDIA
         queue.enqueueUnmapMemObject(CUDA_FR, pfr);
         queue.flush();
@@ -1486,32 +1488,6 @@ cl_int ClPrecalc(cl_double freq_start, cl_double freq_end, cl_double freq_step, 
     clReleaseMemObject(bufDe0);
     clReleaseMemObject(bufDytemp);
     clReleaseMemObject(bufYtemp);
-
-#if !defined _WIN32
-#if defined INTEL
-    free(pcc);
-#elif defined AMD
-    free(pcc);
-    free(pFb);
-    free(pfr);
-#elif defined NVIDIA
-    free(memIn);
-    free(pcc);
-    delete[] pcc;
-#endif
-#else // WIN
-    //_aligned_free(pfr);  // res does not need to be freed as it's just a pointer to *pfr.
-#if defined (INTEL)
-    _aligned_free(pcc);
-#elif defined AMD
-    _aligned_free(pcc);
-    _aligned_free(pFa);
-    _aligned_free(pFb);
-    _aligned_free(pfr);
-#elif defined NVIDIA
-    delete[] pcc;
-#endif
-#endif // WIN
 
     ave_dark_facet = sum_dark_facet / max_test_periods;
 

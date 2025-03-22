@@ -25,6 +25,7 @@
     <ClInclude Include="OpenCl\constants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ini.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="OpenCl\blmatrix.cl">
@@ -60,6 +61,7 @@
     <None Include="OpenCl\swap.cl">
       <Filter>Source Files Cl</Filter>
     </None>
+    <None Include="kernel_files.list" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Program.cpp">
