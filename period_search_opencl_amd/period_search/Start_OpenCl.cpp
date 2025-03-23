@@ -729,12 +729,13 @@ template <typename T>
 void PrepareBufferFromFlatenArray(cl_mem &clBuf, size_t arraySize, size_t alignment)
 {
     auto size = arraySize * sizeof(T);
+    size_t padded_size = (size + alignment - 1) & ~(alignment - 1);
     #if defined _WIN32
-      auto pBuf = static_cast<T *>(_aligned_malloc(size, alignment));
+      auto pBuf = static_cast<T *>(_aligned_malloc(padded_size, alignment));
     #else
-      auto pBuf = static_cast<T *>(aligned_alloc(alignment, size));
+      auto pBuf = static_cast<T *>(aligned_alloc(alignment, padded_size));
     #endif
-    memset(pBuf, 0, size);
+    memset(pBuf, 0, padded_size);
     cl_int err = 0;
     clBuf = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, size, pBuf, &err);
     clEnqueueWriteBuffer(queue, clBuf, CL_BLOCKING, 0, size, pBuf, 0, NULL, NULL);
@@ -1062,7 +1063,8 @@ cl_int ClPrecalc(cl_double freq_start, cl_double freq_end, cl_double freq_step, 
     // auto memFr = (freq_result *)aligned_alloc(128, frSize);
     // auto memFr = new (freq_result *)aligned_alloc(128, frSize);
     // auto CUDA_FR = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,  frSize, memFr, err);
-    cl_uint frSize = (sizeof(freq_result) * CUDA_grid_dim_precalc / 128 + 1) * 128;
+    cl_uint frSize = CUDA_grid_dim_precalc * sizeof(freq_result);
+    cl_uint frSizePadded = (frSize + 128 - 1) & ~(128 - 1);
     // auto pfr = new freq_result[CUDA_grid_dim_precalc];
     auto pfr = (freq_result*)aligned_alloc(128, frSize);
     cl_mem CUDA_FR = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, frSize, pfr, &err);
@@ -1078,6 +1080,7 @@ cl_int ClPrecalc(cl_double freq_start, cl_double freq_end, cl_double freq_step, 
     auto CUDA_FR = cl::Buffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, frOptimizedSize, pfr, err);
 #elif defined AMD
     size_t frSize = CUDA_grid_dim_precalc * sizeof(freq_result);
+    size_t frSizePadded = (frSize + 128 - 1) & ~(128 - 1);
     auto pfr = (freq_result*)_aligned_malloc(frSize, 128);
     cl_mem CUDA_FR = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, frSize, pfr, &err);
 #elif NVIDIA
