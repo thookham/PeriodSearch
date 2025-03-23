@@ -358,17 +358,12 @@ cl_int ClPrepare(cl_int deviceId, cl_double* beta_pole, cl_double* lambda_pole, 
     err_num = clGetPlatformIDs(num_platforms_available, platforms, NULL);
     cl_platform_id platform = nullptr;
 
-#if !defined _WIN32
-    char name[1024];
-    char vendor[1024];
-#else
 #if defined AMD
     auto name = new char[1024];
     auto vendor = new char[1024];
 #else
     cl::STRING_CLASS name;
     cl::STRING_CLASS vendor;
-#endif
 #endif
 
     //for (iter = platforms.begin(); iter != platforms.end(); ++iter)
