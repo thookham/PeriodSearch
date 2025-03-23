@@ -1066,7 +1066,7 @@ cl_int ClPrecalc(cl_double freq_start, cl_double freq_end, cl_double freq_step, 
     cl_uint frSize = CUDA_grid_dim_precalc * sizeof(freq_result);
     cl_uint frSizePadded = (frSize + 128 - 1) & ~(128 - 1);
     // auto pfr = new freq_result[CUDA_grid_dim_precalc];
-    auto pfr = (freq_result*)aligned_alloc(128, frSize);
+    auto pfr = (freq_result*)aligned_alloc(128, frSizePadded);
     cl_mem CUDA_FR = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, frSize, pfr, &err);
     // void *pfr;
 #elif NVIDIA
@@ -1081,7 +1081,7 @@ cl_int ClPrecalc(cl_double freq_start, cl_double freq_end, cl_double freq_step, 
 #elif defined AMD
     size_t frSize = CUDA_grid_dim_precalc * sizeof(freq_result);
     size_t frSizePadded = (frSize + 128 - 1) & ~(128 - 1);
-    auto pfr = (freq_result*)_aligned_malloc(frSize, 128);
+    auto pfr = (freq_result*)_aligned_malloc(frSizePadded, 128);
     cl_mem CUDA_FR = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, frSize, pfr, &err);
 #elif NVIDIA
     int frSize = CUDA_grid_dim_precalc * sizeof(freq_result);
