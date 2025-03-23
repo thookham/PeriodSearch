@@ -340,13 +340,10 @@ cl_int ClPrepare(cl_int deviceId, cl_double* beta_pole, cl_double* lambda_pole, 
     }
 
     std::string &savedKernelsHashString = ini["kernels"]["hash"];
-    auto &savedKernelsHash = savedKernelsHashString.empty()
-        ? 0
-        : savedKernelsHashString;
+    std::string savedKernelsHash = savedKernelsHashString.empty() ? "0" : savedKernelsHashString;
 
     if (savedKernelsHash != std::string(kernel_hash))
     {
-        //ini["kernels"]["hash"] = std::to_string(kernel_hash);
         ini["kernels"]["hash"] = std::string(kernel_hash);
         rebuildBinaries = true;
         file.write(ini, true);
@@ -737,13 +734,21 @@ template <typename T>
 void PrepareBufferFromFlatenArray(cl_mem &clBuf, size_t arraySize, size_t alignment)
 {
     auto size = arraySize * sizeof(T);
-    auto pBuf = static_cast<T *>(_aligned_malloc(size, alignment));
+    #if defined _WIN32
+      auto pBuf = static_cast<T *>(_aligned_malloc(size, alignment));
+    #else
+      auto pBuf = static_cast<T *>(aligned_alloc(alignment, size));
+    #endif
     memset(pBuf, 0, size);
     cl_int err = 0;
     clBuf = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, size, pBuf, &err);
     clEnqueueWriteBuffer(queue, clBuf, CL_BLOCKING, 0, size, pBuf, 0, NULL, NULL);
 
-    _aligned_free(pBuf);
+    #if defined _WIN32
+      _aligned_free(pBuf);
+    #else
+      free(pBuf);
+    #endif
 }
 
 cl_int ClPrecalc(cl_double freq_start, cl_double freq_end, cl_double freq_step, cl_double stop_condition, cl_int n_iter_min, cl_double* conw_r,

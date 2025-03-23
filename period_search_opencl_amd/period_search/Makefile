@@ -13,85 +13,82 @@
 # https://stackoverflow.com/questions/57361083/gcc-equivalent-of-gs-gl-gy-oi-md-in-msvc
 
 # DO-NOT-CHANGE!
+BUILD_DIR = build
 BOINC_DIR =../../../boinc_src
 BOINC_API_DIR = $(BOINC_DIR)/api
 BOINC_LIB_DIR = $(BOINC_DIR)/lib
 OPENCL_PATH =../../../AMDSDK
 # OPENCL_PATH = /usr
-OPENCL_LIB_PATH =/opt/amdgpu-pro/lib/x86_64-linux-gnu
-OBJ_DIR =build/Release
+OPENCL_LIB_PATH = /opt/amdgpu-pro/lib/x86_64-linux-gnu
+PS_COMMON_DIR = ../../period_search_common
+PS_COMMON_LIB_DIR = $(PS_COMMON_DIR)/build
 
-# END DO-NOT-CHANGE
+ifeq ($(OS),Windows_NT)
+    OPENCL_LIB := libOpenCL.dll.a
+else
+    OPENCL_LIB := libOpenCL.so
+endif
 
-# CXXFLAGS = -g -O3 .
-CXXFLAGS = -O2 -w -s -std=c++17 -m64 -fstack-protector-strong -fstack-clash-protection -ffunction-sections \
-	-DNDEBUG \
-	-DAMD \
-	-DCL_HPP_ENABLE_EXCEPTIONS \
+# Define compiler and flags
+CXX = g++
+CXXFLAGS = -march=x86-64 -O3 -s -std=c++2a -w -fstack-protector-strong -fstack-clash-protection -ffunction-sections \
 	-I$(BOINC_DIR) \
 	-I$(BOINC_LIB_DIR) \
 	-I$(BOINC_API_DIR) \
+	-I$(PS_COMMON_DIR) \
+	-L$(PS_COMMON_LIB_DIR) \
 	-I$(OPENCL_PATH)/include \
 	-L$(OPENCL_LIB_PATH) \
-	-L /usr/X11R6/lib \
-	-L. 
-
-CC=g++
-CXX=g++
-# OPTFLAGS=
-OPTFLAGS= -O2 -s -w -m64
-CFLAGS=$(OPTFLAGS) \
-	-DNDEBUG \
+	-L/usr/X11R6/lib \
 	-DAMD \
+	-DNDEBUG \
 	-DCL_HPP_ENABLE_EXCEPTIONS \
-	-I$(BOINC_DIR) \
-	-I$(BOINC_LIB_DIR) \
-	-I$(BOINC_API_DIR) \
-	-I$(OPENCL_PATH)/include \
-	-L$(OPENCL_LIB_PATH) \
-	-L. 
+	-L.
 
-LDFLAGS=-lm -lrt -Xlinker -rpath -m64 .
+# Define the target executable
+TARGET = $(BUILD_DIR)/period_search_BOINC_linux_amd_opencl_110_x64_Release
 
-MY_LIBS=$(OBJ_DIR)/trifac.o $(OBJ_DIR)/areanorm.o $(OBJ_DIR)/sphfunc.o $(OBJ_DIR)/ellfit.o $(OBJ_DIR)/ludcmp.o $(OBJ_DIR)/lubksb.o\
-	$(OBJ_DIR)/covsrt.o $(OBJ_DIR)/memory.o $(OBJ_DIR)/host_dot_product.o\
-	$(OBJ_DIR)/compareResult.o $(OBJ_DIR)/Start_OpenCl.o $(OBJ_DIR)/VersionInfo.o 
+# Define the source files
+SRC = HelperFunctions.cpp trifac.cpp areanorm.cpp sphfunc.cpp ellfit.cpp ludcmp.cpp lubksb.cpp covsrt.cpp\
+	compareResult.cpp Start_OpenCl.cpp VersionInfo.cpp period_search_BOINC.cpp
 
-SOURCE_FILES = trifac.cpp areanorm.cpp sphfunc.cpp ellfit.cpp ludcmp.cpp lubksb.cpp\
-	covsrt.cpp memory.cpp host_dot_product.cpp\
-	compareResult.cpp Start_OpenCl.cpp VersionInfo.cpp
+# Define the object files
+OBJ = $(SRC:%.cpp=$(BUILD_DIR)/%.o)
 
-OBJECT_FILES     = $(SOURCE_FILES:%.cpp=$(OBJ_DIR)/%.o)
+# Default target to build the executable
+all: $(BUILD_DIR) $(TARGET)
 
-PROGS = period_search_BOINC_linux_amd_opencl_110_x64_Release
-EXECUTABLE_FILES = $(PROGS:%=$(OBJ_DIR)/%)
+# Rule to create build directory
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
-all: $(EXECUTABLE_FILES)
+# Rule to build the static library
+$(TARGET): $(OBJ) $(BUILD_DIR)/libstdc++.a $(BOINC_LIB_DIR)/libboinc.a $(BOINC_API_DIR)/libboinc_api.a $(PS_COMMON_LIB_DIR)/libps_common.a $(BUILD_DIR)/$(OPENCL_LIB)
+	$(CXX) $(CXXFLAGS) -o $@ $(OBJ) $(BUILD_DIR)/libstdc++.a -pthread \
+	$(BUILD_DIR)/$(OPENCL_LIB) \
+	$(PS_COMMON_LIB_DIR)/libps_common.a \
+	$(BOINC_API_DIR)/libboinc_api.a \
+	$(BOINC_LIB_DIR)/libboinc.a \
+	-lm
 
-$(OBJ_DIR)/libstdc++.a:
-	ln -s `g++ -print-file-name=libstdc++.a` $(OBJ_DIR)/libstdc++.a
+# -lm -Xlinker -rpath -m64 .
 
-$(OBJ_DIR)/libOpenCL.so:
-	ln -s $(OPENCL_LIB_PATH)/libOpenCL.so $(OBJ_DIR)/libOpenCL.so
+# Rule to build object files
+$(BUILD_DIR)/%.o: %.cpp
+	@mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# Rule to create symbolic link for libstdc++.a
+$(BUILD_DIR)/libstdc++.a:
+	@mkdir -p $(BUILD_DIR)
+	ln -s `g++ -print-file-name=libstdc++.a` $(BUILD_DIR)/libstdc++.a
+
+$(BUILD_DIR)/$(OPENCL_LIB):
+	@mkdir -p $(BUILD_DIR)
+	ln -s $(OPENCL_LIB_PATH)/$(OPENCL_LIB) $(BUILD_DIR)/$(OPENCL_LIB)
+
+# Clean rule to remove compiled files
 clean:
-	/bin/rm -f $(OBJ_DIR)/$(PROGS) *.o $(OBJ_DIR)/*.o $(OBJ_DIR)/libstdc++.a $(OBJ_DIR)/libOpenCL.so
+	rm -rf $(BUILD_DIR)
 
-distclean:
-	/bin/rm -f $(OBJ_DIR)/$(PROGS) $(OBJ_DIR)/*.o $(OBJ_DIR)/libstdc++.a $(OBJ_DIR)/libOpenCL.so
-
-install: period_search_BOINC_linux_amd_opencl_110_x64_Release
-
-# specify library paths explicitly (rather than -l)
-# because otherwise you might get a version in /usr/lib etc.
-
-$(EXECUTABLE_FILES): period_search_BOINC.cpp  $(OBJECT_FILES) $(OBJ_DIR)/libstdc++.a $(BOINC_API_DIR)/libboinc_api.a $(BOINC_LIB_DIR)/libboinc.a $(OBJ_DIR)/libOpenCL.so
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJECT_FILES) $< $(OBJ_DIR)/libstdc++.a -pthread \
-	$(BOINC_API_DIR)/libboinc_api.a $(OBJ_DIR)/libOpenCL.so \
-	$(BOINC_LIB_DIR)/libboinc.a $(LDFLAGS)
-	@echo "Build successful!"
-
-$(OBJ_DIR)/%.o: %.cpp
-	@echo Compiling $<
-	@mkdir -p $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+.PHONY: all clean
