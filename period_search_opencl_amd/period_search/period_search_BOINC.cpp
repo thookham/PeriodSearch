@@ -128,7 +128,7 @@
 #include "mfile.h"
 #include "arrayHelpers.hpp"
 #include "ini.h"
-#include "LcHelpers.hpp"
+#include "LcHelpersCl.hpp"
 //#include "graphics2.h"
 
 #ifdef APP_GRAPHICS
@@ -229,19 +229,29 @@ int main(int argc, char** argv)
 
 	double startPeriod, periodStepCoef, endPeriod, startFrequency, frequencyStep, endFrequency, stopCondition;
 
+    int Lcurves = 0;        // replaces macro MAX_LC
+    int maxLcPoints = 0;    // replaces macro MAX_LC_POINTS
+    int maxDataPoints = 0;  // replaces macro MAX_N_OBS
+
 	cl_int ndata;
 	cl_double cl;
 
 	// resolve logical name first
 	boinc_resolve_filename(input_filename, inputPath, sizeof(inputPath));
 
-    auto gl = globals();
-    auto res = PrepareLcData(gl, inputPath);
+    //auto gl = globals();
+    globalsCl gl{};
+    auto res = PrepareLcData(gl, inputPath, Lcurves, maxLcPoints, maxDataPoints);
     if (res <= 0)
     {
         fprintf(stderr, "\nCouldn't find input file, resolved name %s.\n", inputPath);
         fflush(stderr);
     }
+
+    //auto gl = PrepareLcData(inputPath);
+
+    int test = gl.Lcurves;
+	printf("Main: gl.Lcurves: %d\n", test);
 
     /* Minimum JD*/
     double jdMin;
@@ -249,6 +259,7 @@ int main(int argc, char** argv)
     double jdMax;
     /* Time in JD*/
     std::vector<double> tim(gl.maxDataPoints + 2, 0.0);
+	printf("Main: gl.Lcurves: %d\n", gl.Lcurves);
     /* Brightness*/
     std::vector<double> brightness(gl.maxDataPoints + 4, 0.0);
     /* Solar phase angle */

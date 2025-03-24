@@ -21,6 +21,7 @@
 #include <cstdio>
 #include "constants.h"
 #include <string>
+#include <vector>
 
 extern cl_int l_max, m_max, n_iter, last_call,
 n_coef, num_fac, n_ph_par,
@@ -51,67 +52,66 @@ extern cl_double Area[MAX_N_FAC + 1], Darea[MAX_N_FAC + 1];
 //extern cl_double weight[MAX_N_OBS + 1];
 
 extern std::string kernelCurv, kernelDaveFile, kernelSig2wghtFile;
-//extern std::vector<cl::Platform> platforms;
-//extern std::vector<cl::Device> devices;
-//extern cl::Context context;
-//extern cl::Program program;
-//extern cl::Kernel kernel, kernelDave, kernelSig2wght;
-//extern cl::CommandQueue queue;
-//extern unsigned int uiWA, uiHA, uiWB, uiHB, uiWC, uiHC;
-//extern cl::Buffer bufCg, bufArea, bufDarea, bufDg, bufFc, bufFs, bufDsph, bufPleg, bufMmax, bufLmax, bufX, bufY, bufZ;
-//extern cl::Buffer bufSig, bufSig2iwght, bufDy, bufWeight, bufYmod;
-//extern cl::Buffer bufDave, bufDyda;
-//extern cl::Buffer bufD;
 
-//extern const char *ocl_src_kernelSource;
+struct globalsCl
+{
+#ifdef __GNUC__
+    double Nor[3][MAX_N_FAC + 8]{0.0};
+    double Area[MAX_N_FAC + 8]{0.0};
+    double Darea[MAX_N_FAC + 8]{0.0};
+    double dyda[MAX_N_PAR + 16]{0.0};
+    double Dg[MAX_N_FAC + 16][MAX_N_PAR + 8]{{0.0}};
 
+    std::vector<std::vector<double>> covar;
+    std::vector<std::vector<double>> alpha;
+    // AlignedOuterVector covar __attribute__((aligned(64)));
+    // AlignedOuterVector alpha __attribute__((aligned(64)));
+#else
+#if _MSC_VER >= 1900 // Visual Studio 2015 or later
+    // NOTE: About MSVC - https://learn.microsoft.com/en-us/cpp/cpp/alignment-cpp-declarations?view=msvc-170
+    double Nor[3][MAX_N_FAC + 8] = {};
+    double Area[MAX_N_FAC + 8] = {};
+    double Darea[MAX_N_FAC + 8] = {};
+    double Dg[MAX_N_FAC + 16][MAX_N_PAR + 8] = {};
+    double dyda[MAX_N_PAR + 16] = {};
+    std::vector<std::vector<double>> covar;
+    std::vector<std::vector<double>> alpha;
+#else
+    __declspec(align(64)) double Nor[3][MAX_N_FAC + 8];
+    __declspec(align(64)) double Area[MAX_N_FAC + 8];
+    __declspec(align(64)) double Darea[MAX_N_FAC + 8];
+    __declspec(align(64)) double Dg[MAX_N_FAC + 16][MAX_N_PAR + 8];
+    __declspec(align(64)) double dyda[MAX_N_PAR + 16];
+    __declspec(align(64)) std::vector<std::vector<double>> covar;
+    __declspec(align(64)) std::vector<std::vector<double>> alpha;
+#endif
+#endif
 
-// NOTE: global to one thread
-//struct FreqContext
-//{
-//	//	double Area[MAX_N_FAC+1];
-//	double* Area;
-//	//	double Dg[(MAX_N_FAC+1)*(MAX_N_PAR+1)];
-//	double* Dg;
-//	//	double alpha[MAX_N_PAR+1][MAX_N_PAR+1];
-//	double* alpha;
-//	//	double covar[MAX_N_PAR+1][MAX_N_PAR+1];
-//	double* covar;
-//	//	double dytemp[(POINTS_MAX+1)*(MAX_N_PAR+1)]
-//	double* dytemp;
-//	//	double ytemp[POINTS_MAX+1],
-//	double* ytemp;
-//	double cg[MAX_N_PAR + 1];
-//	double Ochisq, Chisq, Alamda;
-//	double atry[MAX_N_PAR + 1], beta[MAX_N_PAR + 1], da[MAX_N_PAR + 1];
-//	double Blmat[4][4];
-//	double Dblm[3][4][4];
-//	//mrqcof locals
-//	double dyda[MAX_N_PAR + 1], dave[MAX_N_PAR + 1];
-//	double trial_chisq, ave;
-//	int np, np1, np2;
-//	//bright
-//	double e_1[POINTS_MAX + 1], e_2[POINTS_MAX + 1], e_3[POINTS_MAX + 1], e0_1[POINTS_MAX + 1], e0_2[POINTS_MAX + 1], e0_3[POINTS_MAX + 1], de[POINTS_MAX + 1][4][4], de0[POINTS_MAX + 1][4][4];
-//	double jp_Scale[POINTS_MAX + 1];
-//	double jp_dphp_1[POINTS_MAX + 1], jp_dphp_2[POINTS_MAX + 1], jp_dphp_3[POINTS_MAX + 1];
-//	// gaus
-//	int indxc[MAX_N_PAR + 1], indxr[MAX_N_PAR + 1], ipiv[MAX_N_PAR + 1];
-//	//global
-//	double freq;
-//	int isNiter;
-//	double iter_diff, rchisq, dev_old, dev_new;
-//	int Niter;
-//	double chck[4];
-//	int isAlamda; //Alamda<0 for init
-//	//
-//	int isInvalid;
-//	//test
-//};
-//
-//struct FreqResult
-//{
-//	int isReported;
-//	double dark_best, per_best, dev_best, la_best, be_best;
-//};
+    int Lcurves = 0;
+    int maxLcPoints = 0;	// replaces macro MAX_LC_POINTS
+    int maxDataPoints = 0;	// replaces macro MAX_N_OBS
+    int dytemp_sizeX = 0;
+    int dytemp_sizeY = 0;
 
-//const int BLOCK_DIM = 128;
+    // points in every lightcurve
+    std::vector<int> Lpoints;
+    std::vector<int> Inrel;
+
+    double ymod;
+    double wt;
+    double sig2i;
+    double dy;
+    double coef;
+    double wght;
+    double ave;
+    double xx1[4]{0.0};
+    double xx2[4]{0.0};
+    double dave[MAX_N_PAR + 1 + 4]{0.0};
+    std::vector<double> ytemp;
+    std::vector<double> Weight;
+    std::vector<std::vector<double>> dytemp;
+
+    globalsCl()
+    {
+    }
+};

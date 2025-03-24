@@ -60,6 +60,9 @@
     <ClCompile Include="period_search\HelperFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="period_search\LcHelpersCl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="period_search\cpp.hint" />
@@ -70,9 +73,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="period_search\declarations.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="period_search\declarations_OpenCl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="period_search\globals.h">
@@ -90,13 +90,16 @@
     <ClInclude Include="period_search\targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="period_search\resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="period_search\opencl_helper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="period_search\ini.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="period_search\resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="period_search\LcHelpersCl.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

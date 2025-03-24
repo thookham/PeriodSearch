@@ -15,9 +15,9 @@
 
 #include "constants.h"
 #include "arrayHelpers.hpp"
+#include "globals.h"
 
-
-void processLine15(struct globals& gl, const char* line, int& err)
+void processLine15(struct globalsCl& gl, const char* line, int& err)
 {
 	int lcurves;
 	err = sscanf(line, "%d", &lcurves);
@@ -31,7 +31,7 @@ void processLine15(struct globals& gl, const char* line, int& err)
 	gl.Lpoints.resize(gl.Lcurves + 2, 0);
 }
 
-void processLine16(struct globals& gl, const char* line, int& err, int& offset, int& i, int& i_temp, int lineNumber)
+void processLine16(struct globalsCl& gl, const char* line, int& err, int& offset, int& i, int& i_temp, int lineNumber)
 {
 	err = sscanf(line, "%d %d", &gl.Lpoints[0], &i_temp);
 	if (err != 2) {
@@ -43,7 +43,7 @@ void processLine16(struct globals& gl, const char* line, int& err, int& offset, 
 	i++;
 }
 
-void processSubsequentLines(struct globals& gl, const char* line, int& err, int& offset, int& i, int& i_temp, int lineNumber) {
+void processSubsequentLines(struct globalsCl& gl, const char* line, int& err, int& offset, int& i, int& i_temp, int lineNumber) {
 	err = sscanf(line, "%d %d", &gl.Lpoints[i], &i_temp);
 	if (err != 2) {
 		err = -1;
@@ -61,7 +61,7 @@ void processSubsequentLines(struct globals& gl, const char* line, int& err, int&
  *
  * @param gl A struct containing global variables.
  */
-void MakeConvexityRegularization(struct globals& gl)
+void MakeConvexityRegularization(struct globalsCl& gl)
 {
 	gl.Lcurves = gl.Lcurves + 1;
 	gl.Lpoints[gl.Lcurves] = 3;
@@ -85,7 +85,7 @@ void MakeConvexityRegularization(struct globals& gl)
  * @return An integer indicating the success or failure of the operation.
  */
 //globals PrepareLcData(const char* filename)
-int PrepareLcData(globals &gl, const char* filename)
+int PrepareLcData(globalsCl &gl, const char* filename, int &Lcurves, int &maxLcPoints, int &maxDataPoints)
 {
 	//auto gl = globals();
 	int i_temp;
@@ -189,3 +189,4 @@ int PrepareLcData(globals &gl, const char* filename)
 	return 1;
 	//return gl;
 }
+

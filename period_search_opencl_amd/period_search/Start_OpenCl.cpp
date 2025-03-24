@@ -319,7 +319,7 @@ cl_int ClBuildProgramWithBinary(const char *name, const cl_device_id device, con
 
 cl_int ClPrepare(cl_int deviceId, cl_double* beta_pole, cl_double* lambda_pole, cl_double* par, cl_double lcoef, cl_double a_lamda_start, cl_double a_lamda_incr,
     std::vector<std::vector<double>>& ee, std::vector<std::vector<double>>& ee0, std::vector<double>& tim,
-    cl_double Phi_0, cl_int checkex, cl_int ndata, struct globals& gl)
+    cl_double Phi_0, cl_int checkex, cl_int ndata, struct globalsCl& gl)
 {
 #if !defined _WIN32
 
@@ -748,7 +748,7 @@ void PrepareBufferFromFlatenArray(cl_mem &clBuf, size_t arraySize, size_t alignm
 
 cl_int ClPrecalc(cl_double freq_start, cl_double freq_end, cl_double freq_step, cl_double stop_condition, cl_int n_iter_min, cl_double* conw_r,
     cl_int ndata, std::vector<int>& ia, cl_int* ia_par, cl_int* new_conw, std::vector<double>& cg_first, std::vector<double>& sig, cl_int Numfac,
-    std::vector<double>& brightness, struct globals& gl, cl_double lcoef, int Ncoef)
+    std::vector<double>& brightness, struct globalsCl& gl, cl_double lcoef, int Ncoef)
 {
     cl_int max_test_periods, iC;
     cl_int theEnd = -100;
@@ -1505,7 +1505,7 @@ cl_int ClPrecalc(cl_double freq_start, cl_double freq_end, cl_double freq_step, 
 
 cl_int ClStart(int n_start_from, double freq_start, double freq_end, double freq_step, double stop_condition, int n_iter_min, double conw_r,
     int ndata, std::vector<int>& ia, int* ia_par, std::vector<double>& cg_first, MFILE& mf, double escl, std::vector<double>& sig, int Numfac,
-    std::vector<double>& brightness, struct globals& gl)
+    std::vector<double>& brightness, struct globalsCl& gl)
 {
     double iter_diff_max;
     int retval, i, n, m, iC;

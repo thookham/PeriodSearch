@@ -114,7 +114,7 @@ using AlignedOuterVector = std::vector<AlignedInnerVector, AlignedAllocatorNew<A
  * @param init_value An optional initial value for the elements of the vector.
  *                   Defaults to a value-initialized T object if not specified.
  */
-#if defined _MSC_VER & _MSC_VER < 1900 // Visual Studio 2013 or older
+#if defined _MSC_VER && _MSC_VER < 1900 // Visual Studio 2013 or older
 template <typename T>
 void init_vector(std::vector<T>& vector, const int size, T init_value = T())
 {
@@ -141,7 +141,7 @@ void init_vector(std::vector<T>& vector, const int size, T init_value = T{})
  * @param init_value An optional initial value for the elements of the matrix.
  *                   Defaults to a value-initialized T object if not specified.
  */
-#if defined (_MSC_VER) & (_MSC_VER < 1900) // Visual Studio 2013 or older
+#if defined (_MSC_VER) && (_MSC_VER < 1900) // Visual Studio 2013 or older
 template <typename T>
 void init_matrix(std::vector<std::vector<T>>& matrix, const int rows, const int cols, T init_value = T())
 {
@@ -239,7 +239,7 @@ std::vector<T> flatten2Dvector(const std::vector<std::vector<T>>& matrix)
 	std::vector<T> flattened_vec;
 	flattened_vec.reserve(rows * cols); // Pre-allocate space for efficiency
 
-#if defined _MSC_VER & _MSC_VER < 1900
+#if defined _MSC_VER && _MSC_VER < 1900
 	for (size_t i = 0; i < matrix.size(); ++i)
 	{
 		const auto& row = matrix[i];
@@ -275,7 +275,70 @@ void printArray(double array[], int iMax, char msg[]);
 void printArray(double** array, int iMax, int jMax, char msg[]);
 void printArray(double*** array, int iMax, int jMax, int kMax, char msg[]);
 
-extern struct globals
+#if defined AMD
+//struct globals
+//{
+//#ifdef __GNUC__
+//	double Nor[3][MAX_N_FAC + 8]{0.0};
+//	double Area[MAX_N_FAC + 8]{0.0};
+//	double Darea[MAX_N_FAC + 8]{0.0};
+//	double dyda[MAX_N_PAR + 16]{0.0};
+//	double Dg[MAX_N_FAC + 16][MAX_N_PAR + 8]{ {0.0} };
+//
+//	std::vector<std::vector<double>> covar;
+//	std::vector<std::vector<double>> alpha;
+//	// AlignedOuterVector covar __attribute__((aligned(64)));
+//	// AlignedOuterVector alpha __attribute__((aligned(64)));
+//#else
+//#if _MSC_VER >= 1900 // Visual Studio 2015 or later
+//	// NOTE: About MSVC - https://learn.microsoft.com/en-us/cpp/cpp/alignment-cpp-declarations?view=msvc-170
+//	double Nor[3][MAX_N_FAC + 8] = {};
+//	double Area[MAX_N_FAC + 8] = {};
+//	double Darea[MAX_N_FAC + 8] = {};
+//	double Dg[MAX_N_FAC + 16][MAX_N_PAR + 8] = {};
+//	double dyda[MAX_N_PAR + 16] = {};
+//	std::vector<std::vector<double>> covar;
+//	std::vector<std::vector<double>> alpha;
+//#else
+//	__declspec(align(64)) double Nor[3][MAX_N_FAC + 8];
+//	__declspec(align(64)) double Area[MAX_N_FAC + 8];
+//	__declspec(align(64)) double Darea[MAX_N_FAC + 8];
+//	__declspec(align(64)) double Dg[MAX_N_FAC + 16][MAX_N_PAR + 8];
+//	__declspec(align(64)) double dyda[MAX_N_PAR + 16];
+//	__declspec(align(64)) std::vector<std::vector<double>> covar;
+//	__declspec(align(64)) std::vector<std::vector<double>> alpha;
+//#endif
+//#endif
+//
+//	//int Lcurves = 0;
+//	//int maxLcPoints = 0;	// replaces macro MAX_LC_POINTS
+//	//int maxDataPoints = 0;	// replaces macro MAX_N_OBS
+//	int dytemp_sizeX = 0;
+//	int dytemp_sizeY = 0;
+//
+//	// points in every lightcurve
+//	std::vector<int> Lpoints;
+//	std::vector<int> Inrel;
+//
+//	double ymod;
+//	double wt;
+//	double sig2i;
+//	double dy;
+//	double coef;
+//	double wght;
+//	double ave;
+//	double xx1[4]{0.0};
+//	double xx2[4]{0.0};
+//	double dave[MAX_N_PAR + 1 + 4]{0.0};
+//	std::vector<double> ytemp;
+//	std::vector<double> Weight;
+//	std::vector<std::vector<double>> dytemp;
+//
+//	globals(){}
+//};
+
+#elif not defined AMD
+struct globals
 {
 #ifdef __GNUC__
 	double Nor[3][MAX_N_FAC + 8] __attribute__((aligned(64)));
@@ -345,6 +408,9 @@ extern struct globals
 		alpha.resize(rows, AlignedInnerVector(cols));
 	}
 #endif
-} gl;
+};
+//
+#endif
 
 #endif // GLOBALS_H
+

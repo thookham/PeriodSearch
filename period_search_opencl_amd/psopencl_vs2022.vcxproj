@@ -324,12 +324,12 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_WIN32;_USE_MATH_DEFINES;_CONSOLE;__CL_ENABLE_EXCEPTIONS;AMD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_WIN32;_CRT_SECURE_NO_WARNINGS;_USE_MATH_DEFINES;_CONSOLE;__CL_ENABLE_EXCEPTIONS;AMD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <AdditionalIncludeDirectories>..\period_search_common;C:\boincsdk\boinc\api;C:\boincsdk\boinc\lib;C:\boincsdk\boinc\win_build\Build\x64\Debug;$(AMDAPPSDKROOT)include;$(AMDAPPSDLROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <OmitFramePointers>true</OmitFramePointers>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <CompileAs>CompileAsCpp</CompileAs>
       <BufferSecurityCheck>true</BufferSecurityCheck>
@@ -525,6 +525,7 @@ call "$(ProjectDir)\stringify.bat"
     <ClCompile Include="period_search\ellfit.cpp" />
     <ClCompile Include="period_search\HelperFunctions.cpp" />
     <ClCompile Include="period_search\kernels.cpp" />
+    <ClCompile Include="period_search\LcHelpersCl.cpp" />
     <ClCompile Include="period_search\lubksb.cpp" />
     <ClCompile Include="period_search\ludcmp.cpp" />
     <ClCompile Include="period_search\period_search_BOINC.cpp" />
@@ -544,10 +545,10 @@ call "$(ProjectDir)\stringify.bat"
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="period_search\declarations.hpp" />
-    <ClInclude Include="period_search\declarations_OpenCl.h" />
     <ClInclude Include="period_search\globals.h" />
     <ClInclude Include="period_search\Globals_OpenCl.h" />
     <ClInclude Include="period_search\ini.h" />
+    <ClInclude Include="period_search\LcHelpersCl.hpp" />
     <ClInclude Include="period_search\opencl_helper.h" />
     <ClInclude Include="period_search\resource.h" />
     <ClInclude Include="period_search\Start_OpenCl.h" />
