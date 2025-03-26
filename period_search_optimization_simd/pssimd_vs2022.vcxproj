@@ -430,7 +430,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\boincsdk\boinc\api;C:\boincsdk\boinc\lib;C:\boincsdk\boinc\win_build\Build\x64\Debug;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\period_search_common;C:\boincsdk\boinc\api;C:\boincsdk\boinc\lib;C:\boincsdk\boinc\win_build\Build\x64\Debug;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_USE_MATH_DEFINES;_DEBUG;_CRT_SECURE_NO_WARNINGS;_WIN32;WIN32;WINDOWS;CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -450,11 +450,11 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libcmtd.lib;libcpmtd.lib;libboincapi.lib;libboinc.lib;psapi.lib;ShLwApi.lib;Version.Lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libcmtd.lib;libcpmtd.lib;libboincapi.lib;libboinc.lib;psapi.lib;ShLwApi.lib;Version.Lib;ps_commond.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
       <StackReserveSize>20000000</StackReserveSize>
-      <AdditionalLibraryDirectories>C:\boincsdk\boinc\win_build\Build\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\period_search_common\x64\Debug;C:\boincsdk\boinc\win_build\Build\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <OptimizeReferences>false</OptimizeReferences>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
     </Link>
@@ -823,7 +823,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="period_search\areanorm.cpp" />
-    <ClCompile Include="period_search\arrayHelpers.cpp" />
     <ClCompile Include="period_search\blmatrix.cpp" />
     <ClCompile Include="period_search\bright.cpp" />
     <ClCompile Include="period_search\bright_asimd.cpp">
@@ -965,7 +964,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_7|ARM64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_7|ARM64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="period_search\dot_product.cpp" />
     <ClCompile Include="period_search\ellfit.cpp" />
     <ClCompile Include="period_search\EnumHelpers.cpp" />
     <ClCompile Include="period_search\gauss_errc.cpp" />
@@ -1010,7 +1008,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_7|ARM64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_7|ARM64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="period_search\LcHelpers.cpp" />
     <ClCompile Include="period_search\lubksb.cpp" />
     <ClCompile Include="period_search\ludcmp.cpp" />
     <ClCompile Include="period_search\matrix.cpp" />
