@@ -50,7 +50,7 @@ TARGET = $(BUILD_DIR)/period_search_BOINC_linux_amd_opencl_110_x64_Release
 
 # Define the source files
 SRC = HelperFunctions.cpp trifac.cpp areanorm.cpp sphfunc.cpp ellfit.cpp ludcmp.cpp lubksb.cpp covsrt.cpp\
-	compareResult.cpp Start_OpenCl.cpp VersionInfo.cpp period_search_BOINC.cpp
+	compareResult.cpp Start_OpenCl.cpp VersionInfo.cpp period_search_BOINC.cpp LcHelpersCl.cpp
 
 # Define the object files
 OBJ = $(SRC:%.cpp=$(BUILD_DIR)/%.o)
