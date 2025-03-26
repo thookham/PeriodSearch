@@ -1,4 +1,5 @@
-﻿#include "declarations.hpp"
+﻿#include "globals.h"
+#include "declarations.hpp"
 #include <cmath>
 #include <iostream>
 #include "boinc_api.h"

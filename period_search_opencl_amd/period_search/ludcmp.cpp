@@ -1,6 +1,7 @@
 /* Numerical Recipes */
 
-#define TINY 1.0e-20;
+#define TINY1 1.0e-20;
+#include "globals.h"
 #include "declarations.hpp"
 #include <math.h>
 #include <stdio.h>
@@ -68,7 +69,7 @@ void ludcmp(std::vector<std::vector<double>> &a, const int n, std::vector<int> &
 
         indx[j] = imax;
         if (a[j][j] == 0.0)
-            a[j][j] = TINY;
+            a[j][j] = TINY1;
 
         if (j != n)
         {
@@ -80,4 +81,4 @@ void ludcmp(std::vector<std::vector<double>> &a, const int n, std::vector<int> &
 
     //deallocate_vector((void *)v);
 }
-#undef TINY
+#undef TINY1
