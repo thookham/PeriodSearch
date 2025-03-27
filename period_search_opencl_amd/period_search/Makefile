@@ -19,7 +19,7 @@ BOINC_API_DIR = $(BOINC_DIR)/api
 BOINC_LIB_DIR = $(BOINC_DIR)/lib
 OPENCL_PATH =../../../AMDSDK
 # OPENCL_PATH = /usr
-OPENCL_LIB_PATH = /opt/amdgpu-pro/lib/x86_64-linux-gnu
+# OPENCL_LIB_PATH = /opt/amdgpu-pro/lib/x86_64-linux-gnu
 PS_COMMON_DIR = ../../period_search_common
 PS_COMMON_LIB_DIR = $(PS_COMMON_DIR)/build
 
@@ -38,7 +38,7 @@ CXXFLAGS = -march=x86-64 -O3 -s -std=c++2a -w -fstack-protector-strong -fstack-c
 	-I$(PS_COMMON_DIR) \
 	-L$(PS_COMMON_LIB_DIR) \
 	-I$(OPENCL_PATH)/include \
-	-L$(OPENCL_LIB_PATH) \
+	-L$(OPENCL_PATH) \
 	-L/usr/X11R6/lib \
 	-DAMD \
 	-DNDEBUG \
@@ -85,7 +85,7 @@ $(BUILD_DIR)/libstdc++.a:
 
 $(BUILD_DIR)/$(OPENCL_LIB):
 	@mkdir -p $(BUILD_DIR)
-	ln -s $(OPENCL_LIB_PATH)/$(OPENCL_LIB) $(BUILD_DIR)/$(OPENCL_LIB)
+	ln -s $(OPENCL_PATH)/$(OPENCL_LIB) $(BUILD_DIR)/$(OPENCL_LIB)
 
 # Clean rule to remove compiled files
 clean:

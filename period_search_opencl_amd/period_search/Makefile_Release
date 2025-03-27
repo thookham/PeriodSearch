@@ -18,13 +18,13 @@ OPENCL_PATH =../../../AMDSDK
 # OPENCL_LIB_PATH =/opt/amdgpu-pro/lib/x86_64-linux-gnu
 PS_COMMON_DIR = ../../period_search_common
 PS_COMMON_LIB_DIR = $(PS_COMMON_DIR)/build
-OBJ_DIR =build/Debug
+OBJ_DIR =build/Release
 
 # END DO-NOT-CHANGE
 
 # CXXFLAGS = -g -O3 .
-CXXFLAGS = -march=x86-64 -g -std=c++2a -fstack-protector-strong -fstack-clash-protection -ffunction-sections \
-	-D_DEBUG \
+CXXFLAGS = -march=x86-64 -O3 -w -s -std=c++2a -fstack-protector-strong -fstack-clash-protection -ffunction-sections \
+	-DNDEBUG \
 	-DAMD \
 	-DCL_HPP_ENABLE_EXCEPTIONS \
 	-I$(BOINC_DIR) \
@@ -40,10 +40,9 @@ CXXFLAGS = -march=x86-64 -g -std=c++2a -fstack-protector-strong -fstack-clash-pr
 
 CC=g++
 CXX=g++
-# OPTFLAGS=-O3
-OPTFLAGS=
+OPTFLAGS=-march=x86-64 -O3 -w -s
 CFLAGS=$(OPTFLAGS) \
-	-D_DEBUG \
+	-DNDEBUG \
 	-DAMD \
 	-DCL_HPP_ENABLE_EXCEPTIONS \
 	-I$(BOINC_DIR) \
@@ -68,7 +67,7 @@ SOURCE_FILES = trifac.cpp areanorm.cpp sphfunc.cpp ellfit.cpp ludcmp.cpp lubksb.
 
 OBJECT_FILES     = $(SOURCE_FILES:%.cpp=$(OBJ_DIR)/%.o)
 
-PROGS = period_search_BOINC_linux_amd_opencl_110_x64_Debug
+PROGS = period_search_BOINC_linux_amd_opencl_110_x64_Release
 EXECUTABLE_FILES = $(PROGS:%=$(OBJ_DIR)/%)
 
 all: $(EXECUTABLE_FILES)
@@ -94,7 +93,7 @@ clean:
 distclean:
 	/bin/rm -f $(OBJ_DIR)/$(PROGS) $(OBJ_DIR)/*.o $(OBJ_DIR)/libstdc++.a $(OBJ_DIR)/libOpenCL.so
 
-install: period_search_BOINC_linux_amd_opencl_110_x64_Debug
+install: period_search_BOINC_linux_amd_opencl_110_x64_Release
 
 # specify library paths explicitly (rather than -l)
 # because otherwise you might get a version in /usr/lib etc.
