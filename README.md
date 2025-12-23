@@ -35,6 +35,9 @@ python SCAFFOLD/experiments/generate_input.py
 
 **Requirements**: `boinc-dev` headers, `g++` (C++17 compliant).
 
+**OS Recommendation**: **WSL / Linux is Recommended**.
+Reason: Legacy C code often relies on POSIX headers (like `unistd.h`) or makefiles that assume GCC.
+
 ```bash
 # Using the modernized Makefile
 make -f Makefile.modern

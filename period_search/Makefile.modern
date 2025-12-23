@@ -1,0 +1,43 @@
+# Modernized Makefile for PeriodSearch (Antigravity Fork)
+# Targets: Linux/WSL (Dependencies: libboinc-dev, freeglut3-dev)
+
+CXX = g++
+CC = gcc
+
+# Build Flags
+CXXFLAGS = -std=c++17 -O3 -Wall -g -DAPP_GRAPHICS
+CFLAGS   = -O3 -Wall -g
+
+# Include Paths (Adjust if BOINC is located elsewhere)
+# Assuming standard package installation: /usr/include/boinc
+INCLUDES = -I/usr/include/boinc -I/usr/include/boinc/lib -I/usr/include/boinc/api -I. 
+
+# Library Paths (Standard system paths)
+LDFLAGS = -L/usr/lib 
+
+# Libraries (Dynamic Linking)
+LIBS = -lboinc_api -lboinc -lglut -lGLU -lGL -lm -lpthread
+
+# Source Objects
+OBJS = trifac.o areanorm.o sphfunc.o ellfit.o ludcmp.o lubksb.o mrqmin.o mrqcof.o \
+       curv.o blmatrix.o conv.o covsrt.o phasec.o matrix.o bright.o memory.o \
+       dot_product.o gauss_errc.o Solver.o period_search_BOINC.o
+
+# Target
+TARGET = period_search_BOINC
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+clean:
+	rm -f $(TARGET) *.o
+
+.PHONY: all clean
