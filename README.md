@@ -9,7 +9,7 @@
 
 > [!NOTE]
 > **Antigravity Hydrated Fork**
-> This repository is a verified hydration of the original legacy codebase. It features a significant modernization of the C++ architecture (introducing the `Solver` class) and includes verification scripts (`SCAFFOLD/`) for generating valid input data for testing.
+> This repository is a verified hydration of the original legacy codebase. It features a significant modernization of the C++ architecture (introducing the `Solver` class).
 
 ---
 
@@ -19,24 +19,9 @@
 
 We have refactored the monolithic legacy `main()` into a modular `PeriodSearchSolver` class (`src/Solver.cpp`), making the code testable and maintainable for modern C++ standards (C++17).
 
-### 2. Verification (Simulation)
-
-To generate valid input files and verify the solver logic without connecting to the live BOINC servers:
-
-```bash
-# Generate valid period_search input
-python SCAFFOLD/experiments/generate_input.py
-
-# Run the solver (after building)
-./period_search
-```
-
-### 3. Building
+### 2. Building
 
 **Requirements**: `boinc-dev` headers, `g++` (C++17 compliant).
-
-**OS Recommendation**: **WSL / Linux is Recommended**.
-Reason: Legacy C code often relies on POSIX headers (like `unistd.h`) or makefiles that assume GCC.
 
 ```bash
 # Using the modernized Makefile
